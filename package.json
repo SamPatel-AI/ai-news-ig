@@ -1,0 +1,14 @@
+{
+  "name": "ai-news-ig",
+  "version": "1.0.0",
+  "description": "Daily AI news → Instagram carousel & story renderer, run by a Claude Code Routine",
+  "private": true,
+  "scripts": {
+    "render": "node scripts/render.js",
+    "validate": "node scripts/validate.js",
+    "dry-run": "node scripts/dry-run.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0"
+  }
+}

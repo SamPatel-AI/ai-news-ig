@@ -1,0 +1,63 @@
+{
+  "handle": "@SamPatel.AI",
+  "brand_name": "SamPatel.AI",
+
+  "timezone": "America/New_York",
+
+  "niche": "AI for business — daily updates for time-starved founders and owners, tech and non-tech, focused on what new AI means for running a business",
+
+  "niche_queries": [
+    "AI tools for business",
+    "AI for customer service",
+    "AI for marketing",
+    "AI automation for business",
+    "AI for e-commerce",
+    "AI for operations",
+    "AI product launch business"
+  ],
+
+  "voice": "your smart friend who reads the AI news so you don't have to — practical, numbers over adjectives, every story ends with 'what this means for your business', no jargon without translation, confident but not hypey",
+
+  "ranking_criteria": {
+    "_comment": "Used by ROUTINE_PROMPT.md Step 3 to rank candidate stories. Higher weight = matters more.",
+    "business_applicability": 5,
+    "cost_or_time_savings_hook": 4,
+    "recognizable_name": 4,
+    "accessible_today": 4,
+    "operations_or_jobs_impact": 3,
+    "plain_english_explainable": 3,
+    "recency": 2,
+    "visual_hook": 2
+  },
+
+  "deprioritize": [
+    "pure research papers and benchmarks without a business angle",
+    "developer-only tooling unless framed for business teams",
+    "AI-for-AI-researchers content",
+    "pure drama without business implication",
+    "features only usable in 2026+ (roadmap announcements)"
+  ],
+
+  "colors": {
+    "primary":    "#FF4D2E",
+    "secondary":  "#1A1A1A",
+    "accent":     "#FFD60A",
+    "background": "#0A0A0A",
+    "text":       "#FFFFFF",
+    "muted_text": "#A0A0A0"
+  },
+
+  "fonts": {
+    "heading": "Inter",
+    "body":    "Inter",
+    "heading_weight": 800,
+    "body_weight":    500
+  },
+
+  "aspect_ratios": {
+    "carousel": "4:5",
+    "story":    "9:16"
+  },
+
+  "drive_parent_folder": "AI News Daily"
+}

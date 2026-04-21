@@ -1,0 +1,50 @@
+{
+  "story_id": "test",
+  "source": { "name": "TLDR AI", "url": "https://tldr.tech/ai", "published_at": "2026-04-20T09:00:00Z" },
+  "aspect": "4:5",
+  "slides": [
+    {
+      "type": "hook",
+      "tag": "OpenAI",
+      "headline": "GPT-5 just got 60% cheaper",
+      "subtext": "Your customer service bot budget just dropped overnight"
+    },
+    {
+      "type": "context",
+      "eyebrow": "THE CONTEXT",
+      "headline": "What changed",
+      "body": "OpenAI cut GPT-5 API prices by 60% today. Input tokens dropped from $2.50 to $1 per million. Output fell from $10 to $4."
+    },
+    {
+      "type": "point",
+      "number": 1,
+      "headline": "What it is",
+      "stat": "$1/M tokens",
+      "body": "Same GPT-5 model, same 1M-token context window, same speed. Just a lower bill starting today."
+    },
+    {
+      "type": "point",
+      "number": 2,
+      "headline": "Who it helps",
+      "stat": "< $0.01 per chat",
+      "body": "If you run an AI chatbot, writing assistant, or support tool, your per-customer cost just became trivial."
+    },
+    {
+      "type": "point",
+      "number": 3,
+      "headline": "What to try this week",
+      "body": "Revisit any AI feature you shelved for cost reasons. Rerun the math. Most ROI calcs now work."
+    },
+    {
+      "type": "takeaway",
+      "eyebrow": "WHY IT MATTERS",
+      "headline": "AI automation just became default-affordable",
+      "body": "The pricing that blocked small business AI adoption in 2024 is gone. If you're not using AI in ops yet, the excuse is gone too."
+    },
+    {
+      "type": "cta",
+      "headline": "Daily AI news, built for business owners",
+      "handle": "@SamPatel.AI"
+    }
+  ]
+}

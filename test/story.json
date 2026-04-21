@@ -1,0 +1,13 @@
+{
+  "story_id": "test-story",
+  "source": { "name": "OpenAI", "url": "https://openai.com", "published_at": "2026-04-20T09:00:00Z" },
+  "aspect": "9:16",
+  "slides": [
+    {
+      "type": "story_summary",
+      "headline": "GPT-5 pricing cut 60%",
+      "subtext": "Tap for the full carousel breakdown",
+      "source_badge": "via OpenAI"
+    }
+  ]
+}

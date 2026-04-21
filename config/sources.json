@@ -1,0 +1,54 @@
+{
+  "_comment": "Sources for daily AI-for-business research. Flat list — no tiers. Fetch all, dedupe, rank by brand.json → ranking_criteria.",
+
+  "newsletters": [
+    { "name": "TLDR AI",         "url": "https://tldr.tech/ai",                "enabled": true },
+    { "name": "TLDR Founders",   "url": "https://tldr.tech/founders",          "enabled": true },
+    { "name": "TLDR Tech",       "url": "https://tldr.tech/tech",              "enabled": true },
+    { "name": "TLDR Data",       "url": "https://tldr.tech/data",              "enabled": true },
+    { "name": "The Deep View",   "url": "https://www.thedeepview.co/",         "enabled": true },
+    { "name": "The Rundown AI",  "url": "https://www.therundown.ai/",          "enabled": true },
+    { "name": "Ben's Bites",     "url": "https://bensbites.com/",              "enabled": true },
+    { "name": "The Neuron",      "url": "https://www.theneurondaily.com/",     "enabled": true },
+    { "name": "AlphaSignal",     "url": "https://alphasignal.ai/",             "enabled": true },
+    { "name": "Import AI",       "url": "https://importai.substack.com/",      "enabled": true }
+  ],
+
+  "rss_feeds": [
+    { "name": "HN AI tag",            "url": "https://hnrss.org/newest?q=AI+OR+LLM+OR+GPT&points=50", "enabled": true },
+    { "name": "MIT Tech Review — AI", "url": "https://www.technologyreview.com/topic/artificial-intelligence/feed", "enabled": true }
+  ],
+
+  "search_queries": [
+    "AI tool launch for business today",
+    "new AI feature small business",
+    "AI automation customer service launch",
+    "AI marketing tool release",
+    "OpenAI OR Anthropic OR Google announcement business"
+  ],
+
+  "time_window_hours": 24,
+  "min_stories": 2,
+  "max_stories": 5,
+  "retries_per_source": 2,
+  "retry_backoff_ms": 1000,
+
+  "source_credibility": {
+    "tldr.tech":            0.9,
+    "thedeepview.co":       0.9,
+    "therundown.ai":        0.9,
+    "bensbites.com":        0.85,
+    "theneurondaily.com":   0.85,
+    "alphasignal.ai":       0.85,
+    "importai.substack.com":0.85,
+    "techcrunch.com":       0.85,
+    "theverge.com":         0.8,
+    "arstechnica.com":      0.85,
+    "technologyreview.com": 0.95,
+    "openai.com":           1.0,
+    "anthropic.com":        1.0,
+    "deepmind.google":      1.0,
+    "huggingface.co":       0.9,
+    "_default":             0.5
+  }
+}
