@@ -24,8 +24,13 @@ Business owners — a **mix of tech-savvy founders and non-technical owners** (r
 2. **Abort** with a clear message printed to stdout if any string field in `brand.json` still starts with `TODO_`.
 3. Compute `today_str` = `YYYY-MM-DD` in `brand.json.timezone` using `date +%Y-%m-%d` via Bash (ensuring the system timezone is either set correctly or computed explicitly with `TZ=America/New_York date +%Y-%m-%d`).
 4. Compute `cutoff` = `now - sources.time_window_hours` (default 24h). All recency checks use this explicit cutoff.
-5. **Idempotency:** if `~/AINewsDaily/{today_str}/_LOG.md` exists AND its final line says `status: success`, exit early. Print: `already ran today, exiting.`
-6. **Ensure output directory exists:** `mkdir -p ~/AINewsDaily/{today_str}/` via Bash.
+5. **Idempotency:** exit early with `already ran today, exiting.` ONLY if ALL of these are true:
+   - `~/AINewsDaily/{today_str}/_LOG.md` exists AND its final line says `status: success`
+   - `~/AINewsDaily/{today_str}/_SUMMARY.md` exists
+   - At least one `~/AINewsDaily/{today_str}/news*/` folder exists with a non-empty `newsNN.txt`
+   If any of these are missing (e.g. user deleted the folder to force a rerun), proceed with a full run — do not trust a manifest entry as proof that output exists.
+6. Do not rely on `~/AINewsDaily/_MANIFEST.json` to decide idempotency. The manifest records historical metadata; the local filesystem is the source of truth for whether today's output already exists.
+7. **Ensure output directory exists:** `mkdir -p ~/AINewsDaily/{today_str}/` via Bash.
 
 ## Step 1 — Research (fetch all sources)
 
@@ -337,8 +342,10 @@ Read the current file (or initialize empty). Update:
 ```
 
 Rules:
+- **Always update the manifest at the end of every run** — do not skip this step even if the manifest appears current or was recently written. A prior run's manifest entry does not reflect stories from this run.
 - Prepend today's run entry; keep `recent_runs` at most 30.
-- For every story produced today, append to `posted_stories`. Keep last 7 days only.
+- For every story produced today, append a new entry to `posted_stories` with dedup_key, slug, source_url, date. Do not check if the date already has entries — today's specific stories must always be recorded. Keep last 7 days only.
+- If today's date already has a `recent_runs` entry, **replace** it with the current run's values (do not append a duplicate).
 - Set `last_successful_run = today_str` if final status is `success`.
 - Write via the Write tool.
 
