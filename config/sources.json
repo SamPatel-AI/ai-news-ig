@@ -1,17 +1,16 @@
 {
-  "_comment": "Sources for daily AI-for-business research. Flat list — no tiers. Fetch all, dedupe, rank by brand.json → ranking_criteria.",
+  "_comment": "URLs audited 2026-04-21 against Claude Code CLI WebFetch. All listed URLs return parseable article content (not JS-only landing pages). If a source breaks, check _LOG.md for HTTP status and find an alternate archive/feed URL — many newsletters publish at /api/latest/<slug> or /feed or archive.<domain>/ instead of the marketing landing page.",
 
   "newsletters": [
-    { "name": "TLDR AI",         "url": "https://tldr.tech/ai",                "enabled": true },
-    { "name": "TLDR Founders",   "url": "https://tldr.tech/founders",          "enabled": true },
-    { "name": "TLDR Tech",       "url": "https://tldr.tech/tech",              "enabled": true },
-    { "name": "TLDR Data",       "url": "https://tldr.tech/data",              "enabled": true },
-    { "name": "The Deep View",   "url": "https://www.thedeepview.co/",         "enabled": true },
-    { "name": "The Rundown AI",  "url": "https://www.therundown.ai/",          "enabled": true },
-    { "name": "Ben's Bites",     "url": "https://bensbites.com/",              "enabled": true },
-    { "name": "The Neuron",      "url": "https://www.theneurondaily.com/",     "enabled": true },
-    { "name": "AlphaSignal",     "url": "https://alphasignal.ai/",             "enabled": true },
-    { "name": "Import AI",       "url": "https://importai.substack.com/",      "enabled": true }
+    { "name": "TLDR AI",        "url": "https://tldr.tech/api/latest/ai",        "enabled": true },
+    { "name": "TLDR Founders",  "url": "https://tldr.tech/api/latest/founders",  "enabled": true },
+    { "name": "TLDR Tech",      "url": "https://tldr.tech/api/latest/tech",      "enabled": true },
+    { "name": "TLDR Data",      "url": "https://tldr.tech/api/latest/data",      "enabled": true },
+    { "name": "The Deep View",  "url": "https://archive.thedeepview.com/",       "enabled": true },
+    { "name": "Import AI",      "url": "https://importai.substack.com/feed",     "enabled": true },
+    { "name": "The Neuron",     "url": "https://www.theneurondaily.com/",        "enabled": true },
+    { "name": "AI Secret",      "url": "https://aisecret.us/feed",               "enabled": true },
+    { "name": "Simon Willison's Weblog", "url": "https://simonwillison.net/atom/everything/", "enabled": true }
   ],
 
   "rss_feeds": [
@@ -29,22 +28,22 @@
 
   "time_window_hours": 24,
   "min_stories": 2,
-  "max_stories": 5,
+  "max_stories": 10,
   "retries_per_source": 2,
   "retry_backoff_ms": 1000,
 
   "source_credibility": {
     "tldr.tech":            0.9,
-    "thedeepview.co":       0.9,
-    "therundown.ai":        0.9,
-    "bensbites.com":        0.85,
+    "thedeepview.com":      0.9,
+    "importai.substack.com":0.9,
     "theneurondaily.com":   0.85,
-    "alphasignal.ai":       0.85,
-    "importai.substack.com":0.85,
+    "aisecret.us":          0.75,
+    "simonwillison.net":    0.9,
     "techcrunch.com":       0.85,
     "theverge.com":         0.8,
     "arstechnica.com":      0.85,
     "technologyreview.com": 0.95,
+    "wheresyoured.at":      0.85,
     "openai.com":           1.0,
     "anthropic.com":        1.0,
     "deepmind.google":      1.0,
