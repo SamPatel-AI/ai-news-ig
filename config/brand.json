@@ -18,24 +18,24 @@
 
   "voice": "your smart friend who reads the AI news so you don't have to — practical, numbers over adjectives, every story ends with 'what this means for your business', no jargon without translation, confident but not hypey",
 
-  "ranking_criteria": {
-    "_comment": "Used by ROUTINE_PROMPT.md Step 3 to rank candidate stories. Higher weight = matters more.",
-    "business_applicability": 5,
-    "cost_or_time_savings_hook": 4,
-    "recognizable_name": 4,
-    "accessible_today": 4,
-    "operations_or_jobs_impact": 3,
-    "plain_english_explainable": 3,
-    "recency": 2,
-    "visual_hook": 2
+  "selection_framework": {
+    "_comment": "Replaces the old soft-score ranking. ROUTINE_PROMPT.md Step 3 now applies 4 gates + tier tagging in generous mode (over-collect; user filters in dashboard). No hard cap on story count.",
+    "mode": "generous",
+    "tiers": {
+      "priority":  "Passes all 4 gates with Gate 3 = 3 (directly on-niche, high business impact, concrete numbers, recognizable name, clear action).",
+      "solid":     "Passes all 4 gates with Gate 3 = 2 (relevant, worth posting if it fits the week).",
+      "fyi":       "Passes all 4 gates with Gate 3 = 1 (tangential but kept for context; user decides in dashboard)."
+    }
   },
 
   "deprioritize": [
-    "pure research papers and benchmarks without a business angle",
-    "developer-only tooling unless framed for business teams",
-    "AI-for-AI-researchers content",
-    "pure drama without business implication",
-    "features only usable in 2026+ (roadmap announcements)"
+    "pure research papers, benchmarks, architecture debates",
+    "developer-only tooling (IDEs, frameworks, libraries, APIs) unless framed for business teams",
+    "AI-for-AI-researchers content (alignment, interpretability, mechanistic research)",
+    "pure AI drama (lawsuits, departures, board conflicts) without product or pricing impact",
+    "roadmap-only announcements (coming in 2027+)",
+    "speculation or hot takes without grounded evidence",
+    "geopolitics, chip supply, infrastructure unless SMB impact within 6 months"
   ],
 
   "colors": {

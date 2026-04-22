@@ -52,36 +52,84 @@ Then for each candidate that looks strong enough to keep, visit the article URL 
 3. Drop any candidate whose dedup key matches a `_MANIFEST.json.posted_stories` entry from the **last 7 days**.
 4. Within today's candidate set, dedupe same company + same topic (keep highest-credibility source per `sources.json.source_credibility`).
 
-## Step 3 — Rank and select top 10
+## Step 3 — Filter via 4 gates, then tag with tier (generous mode)
 
-Score every surviving candidate using `brand.json.ranking_criteria` weights:
+**Philosophy:** the user is the taste filter; this pipeline is the researcher. Over-collect rather than over-prune. There is **no cap** on story count. Quiet days produce 3 stories; busy days produce 20+. The gates — not an arbitrary number — decide.
 
-- **business_applicability** (weight 5): can a business owner use this?
-- **cost_or_time_savings_hook** (4): a concrete number
-- **recognizable_name** (4): OpenAI, Google, Microsoft, Anthropic, Meta, Shopify, Amazon, Canva, etc.
-- **accessible_today** (4): exists now, tryable this week
-- **operations_or_jobs_impact** (3): changes how businesses hire, serve, market, operate
-- **plain_english_explainable** (3): explainable in 25 words without jargon
-- **recency** (2)
-- **visual_hook** (2)
+### Gate 1 — Business applicability (hard filter, pass/fail)
 
-**De-prioritize** (see `brand.json.deprioritize`):
+Keep the story only if a business owner (retail, services, agencies, e-commerce, SMB founder) could **use, buy, or act on** the news today or this quarter. Pass examples:
+- ✅ New tool, feature, pricing change, or product SMB owners could adopt
+- ✅ Policy / legal / compliance change affecting businesses
+- ✅ Workflow / hiring / cost implication with a named number
+- ✅ Case study or benchmark with SMB-relevant takeaways
+
+Fail (cut) examples:
+- ❌ Pure AI research, benchmarks, model architectures
+- ❌ VC fundraising rounds without a product or pricing consequence
+- ❌ Executive departures without named business impact
+- ❌ "AI agents are expensive" thinkpieces without a specific action
+- ❌ Chip / infrastructure / geopolitics unless SMB pricing or product impact within 6 months
+- ❌ Developer tooling (IDE plugins, coding frameworks, libraries) UNLESS framed for business teams / non-technical founders
+
+### Gate 2 — Concrete substance (hard filter, pass/fail)
+
+The story must have **at least 2 of these 4**:
+- A specific named tool, feature, or product
+- A number (price, percentage, time saved, timeline, scale)
+- A named company a non-technical reader recognizes
+- A specific action the reader could take this week
+
+Fewer than 2 → cut as vaporware.
+
+### Gate 3 — Niche match (score 0–3, keep if ≥ 1 in generous mode)
+
+- 0 = off-topic for business owners → cut
+- 1 = tangential but has some SMB angle → keep as FYI
+- 2 = relevant, a business owner would find it useful
+- 3 = directly on-niche, reading it would change how a business operates
+
+### Gate 4 — Not already covered (dedup)
+
+- Today's candidate set: same company + same topic counts as one story (keep highest-credibility source per `sources.json.source_credibility`).
+- Cross-day: SHA1 dedup key from Step 2 must not match any `_MANIFEST.json.posted_stories` entry in the last 7 days.
+
+### Tier tagging (every passing story gets one)
+
+After the 4 gates, every surviving story is tagged with exactly one tier:
+
+- **🔥 Priority** — Passes all 4 gates with Gate 3 = 3. High business impact + concrete numbers + recognizable name + clear action. These are the "must post" stories.
+- **⭐ Solid** — Passes all 4 gates with Gate 3 = 2. Clearly useful, worth posting if it fits the week.
+- **💡 FYI** — Passes all 4 gates with Gate 3 = 1. Tangential but kept for context; the user may or may not post these, but keeping them visible is better than pruning aggressively.
+
+### Generous mode rules (explicit)
+
+- Do not cap the story count. If 22 stories pass, keep 22.
+- If 3 stories pass, keep 3 (minimum threshold triggers fallback per Step 10 only if < `sources.min_stories`).
+- When in doubt between Gate 3 = 1 vs. cut, **keep as FYI tier**.
+- When in doubt between Solid vs. Priority, pick Solid.
+- The user filters in the dashboard; you err on the side of inclusion.
+
+### Explicit deprioritize categories (cut before tier tagging)
+
+Even if Gate 1 passes, cut these unless the story has a strong and specific business-owner angle:
 - Pure research papers, benchmarks, architecture debates
-- Developer-only tooling without a business framing
-- AI-for-AI-researchers content
-- Pure drama without business implication
-- Roadmap-only announcements (2026+)
-
-**Select top 10 stories.** If fewer than 10 qualify, keep what you have (minimum 5 — if fewer, trigger fallback in Step 10).
+- Developer-only tooling (new IDEs, frameworks, libraries, APIs without product context)
+- AI-for-AI-researchers content (alignment, interpretability, mechanistic research)
+- Pure AI drama (lawsuits, staff departures, board conflicts) without product/pricing impact
+- Roadmap-only announcements ("coming in 2027")
+- Speculation or hot takes without grounded evidence
+- Geopolitics / chip supply / infrastructure unless SMB impact within 6 months
 
 ## Step 4 — Scaffold output folders
 
-Via Bash:
+Via Bash, create one folder per surviving story. Numbering reflects tier order: all 🔥 Priority stories first (numbered `news01`, `news02`, ...), then ⭐ Solid, then 💡 FYI. Within a tier, order by recency (most recent `published_at` first).
+
 ```
 mkdir -p ~/AINewsDaily/{today_str}/news01 ~/AINewsDaily/{today_str}/news02 ...
 ```
 
-Numbering matches rank order. `news01` = highest-scoring story.
+Use two-digit padding up through `news99`. If more than 99 stories survive (very unlikely — would indicate a filtering bug), use three-digit padding from `news100`.
 
 ## Step 5 — Per-story text brief
 
@@ -94,6 +142,9 @@ URL: {source_url}
 Published: {published_at ISO-8601}
 Author / Newsletter: {author or source_name}
 Fetched: {iso timestamp of when you ran this step}
+Tier: {Priority | Solid | FYI}
+Gate scores: G1=pass, G2={count}/4, G3={0-3}, G4=pass
+Why kept: {one sentence naming which specific tool, number, or angle earned this tier}
 Media files saved locally: newsNN_1.png, newsNN_2.png, ... (list actual filenames saved in Step 6; "none" if no images)
 Video URLs referenced (not downloaded): {list each URL on its own line; "none" if no videos}
 
@@ -238,26 +289,36 @@ For each story:
 
 ## Step 7 — Daily summary
 
-Write `~/AINewsDaily/{today_str}/_SUMMARY.md`:
+Write `~/AINewsDaily/{today_str}/_SUMMARY.md`, grouping stories by tier so the user sees Priority first. Include the story's `Why kept` sentence inline.
 
 ```
 # {today_str} — AI-for-Business Daily Brief
 
-- Stories: N
+- Total stories: N (P priority + S solid + F FYI)
 - Status: success | partial | fallback
 
-## Quick menu
+## 🔥 Priority ({count})
 
-1. **{title}** — {one-liner} → [news01/](news01/)
-2. **{title}** — {one-liner} → [news02/](news02/)
+1. **{title}** — {why_kept} → [newsNN/](newsNN/)
+2. ...
+
+## ⭐ Solid ({count})
+
+3. **{title}** — {why_kept} → [newsNN/](newsNN/)
+4. ...
+
+## 💡 FYI ({count})
+
+N. **{title}** — {why_kept} → [newsNN/](newsNN/)
 ...
 
 ## Sources fetched today
 - TLDR AI: ok
 - TLDR Founders: ok
-- The Rundown AI: failed (HTTP 503)
 - ...
 ```
+
+If a tier has zero stories on a given day (e.g. no Priority tier stories), omit the empty tier heading.
 
 ## Step 8 — Update `~/AINewsDaily/_MANIFEST.json`
 

@@ -68,7 +68,7 @@ The LaunchAgent now fires every morning at 07:00. Each morning:
 ## Phase 6 — Iterate after first week
 
 Day 8 review:
-- Stories off for the business-owner audience? → adjust `brand.json.ranking_criteria` weights or tighten `niche`
+- Stories off for the business-owner audience? → edit the 4 gates in Step 3 of `ROUTINE_PROMPT.md` OR add to `brand.json.deprioritize` OR tighten `niche`. Stories now carry a `Tier: Priority|Solid|FYI` field and a `Why kept:` sentence so you can see exactly what earned a tier.
 - Briefs too shallow / too long? → adjust word-count targets in Step 5 of `ROUTINE_PROMPT.md`
 - Carousel prompts giving off-brand designs? → edit the CAROUSEL PROMPT template in Step 5
 - Same story appearing twice? → check `_MANIFEST.json.posted_stories` dedup window

@@ -1,18 +1,22 @@
 # AI-for-Business Daily Research Brief (Local)
 
-Autonomous daily research pipeline for **[@SamPatel.AI](https://instagram.com/SamPatel.AI)**. Every morning at 7:00 AM, a macOS LaunchAgent on your Mac invokes Claude Code CLI, which reads 10 AI newsletters + RSS + web search, ranks stories for **business owners** (tech and non-tech), and writes **10 text briefs** with carousel prompts and downloaded images to `~/AINewsDaily/YYYY-MM-DD/`. You open the folder, pick stories you want to post, paste the carousel prompt into Claude Design or your design tool, and post.
+Autonomous daily research pipeline for **[@SamPatel.AI](https://instagram.com/SamPatel.AI)**. Every morning at 7:00 AM, a macOS LaunchAgent on your Mac invokes Claude Code CLI, which reads 10 AI newsletters + RSS + web search, filters stories through an explicit 4-gate framework for **business owners** (tech and non-tech), and writes every qualifying story as a text brief with carousel prompt and downloaded images to `~/AINewsDaily/YYYY-MM-DD/`. Stories are tagged `🔥 Priority / ⭐ Solid / 💡 FYI` so you can skim by relevance. You open the folder, pick the ones you want, paste the carousel prompt into Claude Design, and post.
+
+**Generous collection, not a fixed top-10.** Quiet days yield 3–5 stories, busy days 15–20. The gates — not an arbitrary cap — decide the count.
 
 **No API keys. No cloud. No Google Drive. No GitHub OAuth required at runtime.** Just your Claude Max subscription and your Mac.
 
 ```
 7:00 AM  LaunchAgent fires (on your Mac)
 7:04 AM  10 newsletters + RSS + web search fetched
-7:08 AM  Top 10 stories ranked for business-owner relevance
-7:12 AM  Per-story briefs written, hero images downloaded
-7:14 AM  Output ready at ~/AINewsDaily/YYYY-MM-DD/
+7:08 AM  Candidates filtered through 4 gates (business applicability,
+         concrete substance, niche match, dedup)
+7:12 AM  Every passing story tagged Priority / Solid / FYI and written
+         with hero images
+7:14 AM  Output ready at ~/AINewsDaily/YYYY-MM-DD/ (grouped by tier)
 
-You:     Open folder → pick 1-3 stories → paste CAROUSEL PROMPT into
-         Claude Design → post the result. ~5-10 min.
+You:     Open folder → skim _SUMMARY.md → pick stories that catch your
+         eye → paste CAROUSEL PROMPT into Claude Design → post. ~5-10 min.
 ```
 
 ## Audience this is built for
@@ -102,7 +106,7 @@ See [`docs/SETUP_CHECKLIST.md`](docs/SETUP_CHECKLIST.md) for full steps. In brie
 
 ## Iterating
 
-- **Story selection off?** Edit `config/brand.json.ranking_criteria` weights or `deprioritize`.
+- **Story selection off?** Edit the 4 gates in Step 3 of `ROUTINE_PROMPT.md`, or the `deprioritize` list in `config/brand.json`. Tiers are defined in `brand.json.selection_framework.tiers`.
 - **Tone off?** Edit `config/brand.json.voice` and the WHY IT MATTERS instructions in `ROUTINE_PROMPT.md`.
 - **Carousel prompt giving off-brand designs?** Edit the CAROUSEL PROMPT template in `ROUTINE_PROMPT.md` Step 5.
 - **Different schedule?** Edit `scripts/com.sampatel.ainews.plist` → `StartCalendarInterval` → reload: `launchctl unload ... && launchctl load ...`.

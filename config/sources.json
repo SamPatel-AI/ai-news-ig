@@ -27,10 +27,10 @@
   ],
 
   "time_window_hours": 24,
-  "min_stories": 2,
-  "max_stories": 10,
+  "min_stories": 3,
   "retries_per_source": 2,
   "retry_backoff_ms": 1000,
+  "_note_on_max_stories": "Intentionally removed — the 4-gate filter in ROUTINE_PROMPT.md Step 3 decides story count, not a hard cap. Quiet days yield 3 stories; busy days 20+. min_stories is the floor below which the fallback branch triggers.",
 
   "source_credibility": {
     "tldr.tech":            0.9,
