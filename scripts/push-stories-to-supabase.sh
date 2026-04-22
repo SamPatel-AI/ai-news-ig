@@ -256,13 +256,34 @@ for brief in "${DAY_DIR}"/news*/news*.txt; do
     log "  -> ${folder_name} hero image uploaded"
   fi
 
-  http_code=$(curl -sSL -o /tmp/push_resp.json -w "%{http_code}" -X POST \
-    -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
-    -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
-    -H "Content-Type: application/json" \
-    -H "Prefer: resolution=merge-duplicates,return=minimal" \
-    --data "${json_body}" \
-    "${SUPABASE_URL}/rest/v1/stories?on_conflict=dedup_key")
+  # Retry up to 3 times with 1s → 2s → 4s backoff. Treats 5xx and network
+  # errors (http_code == 000) as retryable. 4xx bails out immediately since
+  # retrying a malformed payload is pointless.
+  http_code=""
+  attempt=0
+  while [ "${attempt}" -lt 3 ]; do
+    http_code=$(curl -sSL --max-time 30 -o /tmp/push_resp.json -w "%{http_code}" -X POST \
+      -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+      -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+      -H "Content-Type: application/json" \
+      -H "Prefer: resolution=merge-duplicates,return=minimal" \
+      --data "${json_body}" \
+      "${SUPABASE_URL}/rest/v1/stories?on_conflict=dedup_key" || echo "000")
+
+    if [ "${http_code}" -ge 200 ] && [ "${http_code}" -lt 300 ]; then
+      break
+    fi
+    # 4xx = client error, don't retry
+    if [ "${http_code}" -ge 400 ] && [ "${http_code}" -lt 500 ]; then
+      break
+    fi
+    attempt=$((attempt + 1))
+    if [ "${attempt}" -lt 3 ]; then
+      sleep_s=$((1 << (attempt - 1)))  # 1, 2, 4
+      log "  .. ${folder_name} HTTP ${http_code} — retrying in ${sleep_s}s (attempt ${attempt}/3)"
+      sleep "${sleep_s}"
+    fi
+  done
 
   if [ "${http_code}" -ge 200 ] && [ "${http_code}" -lt 300 ]; then
     log "  OK ${folder_name} pushed (HTTP ${http_code})"
