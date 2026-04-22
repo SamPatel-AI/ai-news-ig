@@ -117,7 +117,7 @@ PROMPT_EOF
     new_status="pending"
     if [ $((attempts + 1)) -ge 3 ]; then new_status="failed"; fi
     error_msg=$(jq_string_escape "claude CLI invocation failed: $(tail -c 200 /tmp/claude-worker-scripts.err)")
-    supa_patch "scripts?id=eq.${script_id}" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
+    supa_patch "scripts?id=eq.${script_id}&generation_status=eq.pending" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
     continue
   fi
 
@@ -151,7 +151,7 @@ print(t[start:])
     new_status="pending"
     if [ $((attempts + 1)) -ge 3 ]; then new_status="failed"; fi
     error_msg=$(jq_string_escape "Claude returned non-JSON: $(echo "${raw_output}" | head -c 200)")
-    supa_patch "scripts?id=eq.${script_id}" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
+    supa_patch "scripts?id=eq.${script_id}&generation_status=eq.pending" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
     continue
   fi
 
@@ -180,7 +180,9 @@ print(t[start:])
       generation_attempts: '"$((attempts + 1))"'
     }')
 
-  http_code=$(supa_patch "scripts?id=eq.${script_id}" "${patch_body}")
+  # Status-gated PATCH: only apply refinement if row is still pending.
+  # Prevents races with user edits/deletes between our read and write.
+  http_code=$(supa_patch "scripts?id=eq.${script_id}&generation_status=eq.pending" "${patch_body}")
   if [ "${http_code}" -ge 200 ] && [ "${http_code}" -lt 300 ]; then
     log "  OK script ${script_id} ready"
   else

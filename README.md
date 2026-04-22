@@ -1,14 +1,14 @@
 # AI-for-Business Daily Research Brief (Local)
 
-Autonomous daily research pipeline for **[@SamPatel.AI](https://instagram.com/SamPatel.AI)**. Every morning at 7:00 AM, a macOS LaunchAgent on your Mac invokes Claude Code CLI, which reads 10 AI newsletters + RSS + web search, filters stories through an explicit 4-gate framework for **business owners** (tech and non-tech), and writes every qualifying story as a text brief with carousel prompt and downloaded images to `~/AINewsDaily/YYYY-MM-DD/`. Stories are tagged `🔥 Priority / ⭐ Solid / 💡 FYI` so you can skim by relevance. You open the folder, pick the ones you want, paste the carousel prompt into Claude Design, and post.
+Autonomous daily research pipeline for **[@SamPatel.AI](https://instagram.com/SamPatel.AI)**. Every morning at 10:00 AM, a macOS LaunchAgent on your Mac invokes Claude Code CLI, which reads ~9 newsletters + RSS + web search, filters stories through an explicit 4-gate framework for **business owners** (tech and non-tech), and writes every qualifying story as a text brief with carousel prompt and downloaded images to `~/AINewsDaily/YYYY-MM-DD/`. Stories are tagged `🔥 Priority / ⭐ Solid / 💡 FYI` so you can skim by relevance. You open the folder, pick the ones you want, paste the carousel prompt into Claude Design, and post.
 
 **Generous collection, not a fixed top-10.** Quiet days yield 3–5 stories, busy days 15–20. The gates — not an arbitrary cap — decide the count.
 
 **No API keys. No cloud. No Google Drive. No GitHub OAuth required at runtime.** Just your Claude Max subscription and your Mac.
 
 ```
-7:00 AM  LaunchAgent fires (on your Mac)
-7:04 AM  10 newsletters + RSS + web search fetched
+10:00 AM  LaunchAgent fires (on your Mac)
+7:04 AM  ~9 newsletters + RSS + web search fetched
 7:08 AM  Candidates filtered through 4 gates (business applicability,
          concrete substance, niche match, dedup)
 7:12 AM  Every passing story tagged Priority / Solid / FYI and written
@@ -56,7 +56,7 @@ Claude Code CLI runs locally on your Mac. It can:
 
 All powered by your existing Claude Max login. No API keys, no external auth.
 
-A `launchd` LaunchAgent (scheduled system job) fires the job at 07:00 daily. Your Mac needs to be on or sleeping — not powered off. If it's asleep at 07:00, launchd runs the job when the Mac next wakes. If it's been off for days, the next launchd fire catches you up with whatever sources are still valid (the fallback branch keeps posting content).
+A `launchd` LaunchAgent (scheduled system job) fires the job at 10:00 daily. Your Mac needs to be on or sleeping — not powered off. If it's asleep at 10:00, launchd runs the job when the Mac next wakes. If it's been off for days, the next launchd fire catches you up with whatever sources are still valid (the fallback branch keeps posting content).
 
 ## Project layout
 
@@ -66,7 +66,7 @@ ai-news-ig/
 ├── plan.md                     ← Progress tracker / spec
 ├── config/
 │   ├── brand.json              ← Handle, niche, voice, colors, fonts, ranking weights
-│   └── sources.json            ← 10 newsletters, RSS, search queries, retry config
+│   └── sources.json            ← ~9 newsletters, RSS, search queries, retry config
 ├── scripts/
 │   ├── run-daily.sh            ← Shell wrapper invoked by LaunchAgent
 │   └── com.sampatel.ainews.plist  ← LaunchAgent definition (install to ~/Library/LaunchAgents/)
@@ -90,17 +90,17 @@ See [`docs/SETUP_CHECKLIST.md`](docs/SETUP_CHECKLIST.md) for full steps. In brie
 
 | Failure mode | Mitigation |
 |---|---|
-| One newsletter down | 10 newsletters + RSS + web search; any 4+ = enough |
+| One newsletter down | ~9 newsletters + RSS + web search; any 4+ = enough |
 | All newsletters fail | RSS + search as independent fallback pool |
 | Fewer than 5 qualifying stories | **Fallback day**: yesterday's folder linked into today's as `fallback_from_YYYY-MM-DD/` |
 | Image download fails | Brief kept, image line says "none" or partial |
-| Mac was off at 07:00 | launchd runs at next wake; missed days show as gaps in `_MANIFEST.json` |
+| Mac was off at 10:00 | launchd runs at next wake; missed days show as gaps in `_MANIFEST.json` |
 | Same story as yesterday | 7-day SHA1 dedup ledger in `_MANIFEST.json` |
 | Manual re-run same day | Step 0 idempotency check |
 
 ## Daily flow
 
-- **07:00** — LaunchAgent fires on your Mac
+- **10:00** — LaunchAgent fires on your Mac
 - **07:14** — `~/AINewsDaily/YYYY-MM-DD/` ready
 - **Whenever** — open folder, pick stories, paste CAROUSEL PROMPT into Claude Design, post
 
@@ -126,7 +126,7 @@ See [`docs/SETUP_CHECKLIST.md`](docs/SETUP_CHECKLIST.md) for full steps. In brie
 
 | Symptom | First check |
 |---|---|
-| No run at 07:00 | `launchctl list \| grep com.sampatel.ainews` and `~/AINewsDaily/_runs/` for logs |
+| No run at 10:00 | `launchctl list \| grep com.sampatel.ainews` and `~/AINewsDaily/_runs/` for logs |
 | `claude: command not found` in run logs | `PATH` in `scripts/run-daily.sh` — Claude installs to `~/.local/bin` by default |
 | 0 stories / fallback daily | `_LOG.md` → source fetch failures; update URLs in `sources.json` |
 | `TODO_` abort | Fill missing field in `brand.json` |

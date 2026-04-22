@@ -183,17 +183,77 @@ print(json.dumps(obj))
 PYEOF
 }
 
+# Upload the first local image (if any) for a story to Supabase Storage and
+# return the public URL. Uses the `carousel-uploads` bucket that's already
+# configured as public-read. Path scheme: hero/{today}/{folder_name}.{ext}
+# Returns empty string on no-image or any failure (non-fatal).
+upload_hero_image() {
+  local story_dir="$1"
+  local folder_name
+  folder_name=$(basename "${story_dir}")
+
+  # Pick the first newsNN_1.* image if present, fallback to any newsNN_*.*
+  local img
+  img=$(ls "${story_dir}"/${folder_name}_1.* 2>/dev/null | head -1)
+  if [ -z "${img}" ]; then
+    img=$(ls "${story_dir}"/${folder_name}_*.* 2>/dev/null | grep -iE '\.(png|jpg|jpeg|gif|webp)$' | head -1)
+  fi
+  if [ -z "${img}" ] || [ ! -f "${img}" ]; then
+    echo ""
+    return
+  fi
+
+  local ext="${img##*.}"
+  local content_type
+  case "${ext,,}" in
+    png)   content_type="image/png" ;;
+    jpg|jpeg) content_type="image/jpeg" ;;
+    gif)   content_type="image/gif" ;;
+    webp)  content_type="image/webp" ;;
+    *)     content_type="application/octet-stream" ;;
+  esac
+
+  local storage_path="hero/${TODAY}/${folder_name}.${ext}"
+  local upload_url="${SUPABASE_URL}/storage/v1/object/${storage_path}"
+
+  # x-upsert: true allows re-runs to overwrite yesterday's upload for the same path
+  local http_code
+  http_code=$(curl -sSL -o /tmp/push_upload.json -w "%{http_code}" \
+    -X PUT \
+    -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+    -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+    -H "Content-Type: ${content_type}" \
+    -H "x-upsert: true" \
+    --data-binary "@${img}" \
+    "${upload_url}")
+
+  if [ "${http_code}" -ge 200 ] && [ "${http_code}" -lt 300 ]; then
+    # Bucket is public-read; construct public URL directly.
+    echo "${SUPABASE_URL}/storage/v1/object/public/${storage_path}"
+  else
+    echo ""
+  fi
+}
+
 ok=0
 fail=0
 
 for brief in "${DAY_DIR}"/news*/news*.txt; do
   [ -f "${brief}" ] || continue
-  folder_name=$(basename "$(dirname "${brief}")")
+  story_dir="$(dirname "${brief}")"
+  folder_name=$(basename "${story_dir}")
 
   if ! json_body=$(parse_brief "${brief}" "${SUMMARY_MAP}"); then
     log "  !! parse failed for ${folder_name}"
     fail=$((fail + 1))
     continue
+  fi
+
+  # Upload hero image (if present) and inject the URL into the JSON before POST.
+  hero_url=$(upload_hero_image "${story_dir}" 2>/dev/null || true)
+  if [ -n "${hero_url}" ]; then
+    json_body=$(echo "${json_body}" | jq --arg u "${hero_url}" '.hero_image_url = $u')
+    log "  -> ${folder_name} hero image uploaded"
   fi
 
   http_code=$(curl -sSL -o /tmp/push_resp.json -w "%{http_code}" -X POST \

@@ -1,6 +1,6 @@
 # Daily AI-for-Business Research Brief (Local Edition)
 
-You are running an autonomous daily research pipeline locally on the user's Mac, invoked by a launchd LaunchAgent at 07:00 America/New_York. Execute end-to-end without asking the user questions. The goal is **never produce an empty day** — if research is thin, fall back to yesterday's briefs. **Text + media only — no image rendering, no PNG generation.** The user writes and designs carousels themselves using the prompts you produce.
+You are running an autonomous daily research pipeline locally on the user's Mac, invoked by a launchd LaunchAgent at 10:00 America/New_York. Execute end-to-end without asking the user questions. The goal is **never produce an empty day** — if research is thin, fall back to yesterday's briefs. **Text + media only — no image rendering, no PNG generation.** The user writes and designs carousels themselves using the prompts you produce.
 
 ## Audience (keep front of mind)
 
@@ -10,8 +10,8 @@ Business owners — a **mix of tech-savvy founders and non-technical owners** (r
 
 - You are running as Claude Code CLI on the user's Mac (macOS)
 - Current working directory is the repo: `/Users/sahilmedtrics/Downloads/ai-news-ig/`
-- `config/brand.json` — brand tokens (handle, niche, voice, timezone, ranking_criteria, deprioritize, colors, fonts)
-- `config/sources.json` — 10 newsletters, RSS feeds, search queries, retry config
+- `config/brand.json` — brand tokens (handle, niche, voice, timezone, selection_framework, deprioritize, colors, fonts)
+- `config/sources.json` — newsletters list (see below), RSS feeds, search queries, retry config
 - All output goes under `~/AINewsDaily/` (the user's home folder — absolute path expands to `/Users/sahilmedtrics/AINewsDaily/`)
 - Tools available: WebFetch, WebSearch, Bash, Read, Write, Glob, Grep
 - **No cloud connectors needed.** No Google Drive. No GitHub. Pure local I/O.
@@ -34,7 +34,7 @@ Business owners — a **mix of tech-savvy founders and non-technical owners** (r
 
 ## Step 1 — Research (fetch all sources)
 
-Fetch every enabled source in `config/sources.json.newsletters` (currently 10: TLDR AI, TLDR Founders, TLDR Tech, TLDR Data, The Deep View, The Rundown AI, Ben's Bites, The Neuron, AlphaSignal, Import AI).
+Fetch every enabled source in `config/sources.json.newsletters`. The current active roster (9 sources): TLDR AI, TLDR Founders, TLDR Tech, TLDR Data, The Deep View, Import AI, The Neuron, AI Secret, Simon Willison's Weblog. The list is audited periodically — always trust `sources.json` over this document if they differ.
 
 Use WebFetch for each newsletter URL. A single source failure **never aborts the run**. Record `ok` or `failed(reason)` per source for `_LOG.md`. Retry up to `retries_per_source` times (default 2) with `retry_backoff_ms` delay between attempts.
 

@@ -6,7 +6,7 @@ Living progress tracker. Tick items as done. Edit freely.
 
 ## Goal
 
-Every morning at 7:00 AM, a macOS LaunchAgent invokes Claude Code CLI on the user's Mac, which reads ~10 AI newsletters + RSS + web search, ranks stories for **business owners** (tech and non-tech), and produces **10 text briefs** in `~/AINewsDaily/YYYY-MM-DD/`. Each brief has: reference metadata, detailed story (500–700 words), business-owner translation (300–500 words), and a self-contained Claude-Design-ready carousel prompt. Downloaded hero images sit alongside each brief. User picks which stories to post, pastes the carousel prompt into their design tool of choice, posts.
+Every morning at 10:00 AM, a macOS LaunchAgent invokes Claude Code CLI on the user's Mac, which reads ~9 newsletters + RSS + web search, ranks stories for **business owners** (tech and non-tech), and produces per-day briefs (typically 3-15 depending on news volume) in `~/AINewsDaily/YYYY-MM-DD/`. Each brief has: reference metadata, detailed story (500–700 words), business-owner translation (300–500 words), and a self-contained Claude-Design-ready carousel prompt. Downloaded hero images sit alongside each brief. User picks which stories to post, pastes the carousel prompt into their design tool of choice, posts.
 
 Morning flow: open `~/AINewsDaily/YYYY-MM-DD/` in Finder → skim `_SUMMARY.md` → pick 1–3 stories → paste `CAROUSEL PROMPT` into Claude Design → post. ~5–10 min.
 
@@ -16,20 +16,20 @@ Morning flow: open `~/AINewsDaily/YYYY-MM-DD/` in Finder → skim `_SUMMARY.md` 
 
 v3 used Claude Code Routines (cloud) + Google Drive upload. User's Claude Team account and Google Drive account are on different emails — Google OAuth keeps failing with a 400. Rather than keep fighting OAuth, pivot to the simplest possible architecture: Claude Code CLI on the user's Mac, scheduled by launchd, output to `~/AINewsDaily/`. No cloud, no OAuth, no cross-account friction.
 
-Trade-off: Mac must be on or asleep at 07:00 (not powered off). For a morning schedule this is essentially always true.
+Trade-off: Mac must be on or asleep at 10:00 (not powered off). For a morning schedule this is essentially always true.
 
 ---
 
 ## Architecture (one paragraph)
 
-Single GitHub repo at `SamPatel-AI/ai-news-ig` hosts the pipeline definition. On the user's Mac, a `launchd` LaunchAgent at `~/Library/LaunchAgents/com.sampatel.ainews.plist` fires daily at 07:00 and runs `scripts/run-daily.sh`. The wrapper invokes `claude --permission-mode bypassPermissions < ROUTINE_PROMPT.md`, which starts the Claude Code CLI against the repo. Claude reads configs, fetches news (WebFetch, WebSearch), writes per-story `.txt` files to `~/AINewsDaily/YYYY-MM-DD/newsNN/newsNN.txt`, downloads hero images via `curl`, writes `_SUMMARY.md`, updates the cross-run manifest at `~/AINewsDaily/_MANIFEST.json`, and writes `_LOG.md`. Per-run stdout/stderr logs live in `~/AINewsDaily/_runs/`. No API keys — the CLI uses the user's existing Claude Max login.
+Single GitHub repo at `SamPatel-AI/ai-news-ig` hosts the pipeline definition. On the user's Mac, a `launchd` LaunchAgent at `~/Library/LaunchAgents/com.sampatel.ainews.plist` fires daily at 10:00 and runs `scripts/run-daily.sh`. The wrapper invokes `claude --permission-mode bypassPermissions < ROUTINE_PROMPT.md`, which starts the Claude Code CLI against the repo. Claude reads configs, fetches news (WebFetch, WebSearch), writes per-story `.txt` files to `~/AINewsDaily/YYYY-MM-DD/newsNN/newsNN.txt`, downloads hero images via `curl`, writes `_SUMMARY.md`, updates the cross-run manifest at `~/AINewsDaily/_MANIFEST.json`, and writes `_LOG.md`. Per-run stdout/stderr logs live in `~/AINewsDaily/_runs/`. No API keys — the CLI uses the user's existing Claude Max login.
 
 ---
 
 ## Phase 1 — Repo in place ✓
 - [x] `ROUTINE_PROMPT.md` rewritten for local execution (10 steps, writes to `~/AINewsDaily/`)
 - [x] `scripts/run-daily.sh` wrapper invokes `claude` with prompt via stdin
-- [x] `scripts/com.sampatel.ainews.plist` LaunchAgent (StartCalendarInterval 07:00)
+- [x] `scripts/com.sampatel.ainews.plist` LaunchAgent (StartCalendarInterval 10:00)
 - [x] README.md + docs/SETUP_CHECKLIST.md updated for local-only
 - [x] package.json pared down (no runtime deps)
 
@@ -54,15 +54,15 @@ Single GitHub repo at `SamPatel-AI/ai-news-ig` hosts the pipeline definition. On
 ## Phase 5 — 7-day shakedown
 - [ ] Let LaunchAgent run unattended 7 days
 - [ ] Day 8: review `_MANIFEST.json` for partial/fallback statuses
-- [ ] Iterate: `brand.json.voice`, `ranking_criteria` weights, CAROUSEL PROMPT template
+- [ ] Iterate: `brand.json.voice`, the 4-gate thresholds in `ROUTINE_PROMPT.md` Step 3, CAROUSEL PROMPT templates in `scripts/worker-*.sh`
 
 ---
 
 ## Critical files
 
 - `ROUTINE_PROMPT.md` — 10-step local pipeline (primary ongoing edit target)
-- `config/brand.json` — handle, niche, voice, timezone, colors/fonts, ranking weights
-- `config/sources.json` — 10 newsletters, RSS, search queries
+- `config/brand.json` — handle, niche, voice, timezone, colors/fonts, selection_framework (4-gate tier definitions), deprioritize list
+- `config/sources.json` — ~9 newsletters, RSS, search queries
 - `scripts/run-daily.sh` — shell wrapper (chmod +x, runs via launchd)
 - `scripts/com.sampatel.ainews.plist` — LaunchAgent definition
 - `~/AINewsDaily/` — output root (outside the repo, user's home)
@@ -73,7 +73,7 @@ Single GitHub repo at `SamPatel-AI/ai-news-ig` hosts the pipeline definition. On
 
 | Risk | Mitigation |
 |---|---|
-| Mac off at 07:00 | launchd runs at next wake; missed days visible as manifest gap |
+| Mac off at 10:00 | launchd runs at next wake; missed days visible as manifest gap |
 | Mac awake but locked | launchd runs regardless of login state; tools work headless |
 | Claude CLI not in PATH under launchd | `run-daily.sh` sets explicit PATH including `~/.local/bin` and homebrew dirs |
 | All newsletters down | RSS + search independent fallback pool |
@@ -92,3 +92,4 @@ Single GitHub repo at `SamPatel-AI/ai-news-ig` hosts the pipeline definition. On
 - `2026-04-21` — v4 pivot to pure local. Reason: Google Drive OAuth failing due to user's Claude email ≠ Drive email. Switched from Routines (cloud) to Claude Code CLI + launchd (local). No cross-account OAuth needed. All code rewritten to write to `~/AINewsDaily/` instead of Drive.
 - `2026-04-21 later` — Smoke tests confirmed pipeline works end-to-end. Run 1 produced 5 stories (6/10 newsletter URLs returned JS-rendered landing pages with no content). Audited all URLs, replaced with working permalinks (`/api/latest/<slug>` for TLDR, `/feed` for Substacks, archive domains). Run 2 produced 10 full-length stories from 48 candidates across 11 sources with dedup working against run 1. Pipeline repeatability verified.
 - `2026-04-21 evening` — v4.1: Story selection rewritten from soft-score ranking (top 10 always) to explicit 4-gate filter + tier tagging in generous mode. `brand.json.ranking_criteria` removed, replaced with `selection_framework` (Priority / Solid / FYI tiers). `sources.json.max_stories` dropped — story count now follows the news, not a fixed cap. Brief's REFERENCE section gains `Tier:`, `Gate scores:`, and `Why kept:` fields for transparency. User runs the taste filter via the dashboard; pipeline over-collects rather than prunes aggressively.
+- `2026-04-22` — v5: Integrated with `SamPatel-AI/briefing-room-hub` frontend via Supabase (project `dmstbdlyhabfjzwduxmj`). Added `push-stories-to-supabase.sh` (invoked at end of daily run, uploads hero images to Storage too), 3 agentic workers (`worker-scripts.sh`, `worker-carousels.sh`, `worker-ig-stories.sh`) that poll Supabase every 2 min for `generation_status='pending'` rows and refine them via Claude CLI with niche-specific prompts. Added `com.sampatel.ainews.workers.plist`. Schedule moved from 07:00 to 10:00. Post-audit fixes (same day): status-gated PATCHes to prevent races, dropped legacy `story_on_select` DB trigger, replaced fragile BSD `sed` with awk in `worker-ig-stories.sh`, removed dead `supa_post` and `niche_queries`/`aspect_ratios`/`drive_parent_folder`/`colors.secondary` config fields, removed stale `output/` dir, fixed newsletter count and schedule drift across README + docs.

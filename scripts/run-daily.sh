@@ -1,5 +1,5 @@
 #!/bin/bash
-# run-daily.sh — invoked by the LaunchAgent at 07:00 daily.
+# run-daily.sh — invoked by the LaunchAgent at 10:00 daily.
 # Runs the Claude Code CLI with ROUTINE_PROMPT.md against this repo,
 # writing output to ~/AINewsDaily/ (on the user's Mac).
 

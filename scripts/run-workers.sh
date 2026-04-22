@@ -19,6 +19,36 @@ cd "${REPO_DIR}"
 
 {
   echo "== $(date -Iseconds) workers run =="
+
+  # Quick check: are there any pending rows across all 3 tables? If not,
+  # skip even loading env + auth check — we'd just exit fast anyway.
+  if [ -f .env.local ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env.local
+    set +a
+  fi
+  pending_count=$(curl -sSL \
+    -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY:-}" \
+    -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY:-}" \
+    -H "Prefer: count=exact" -H "Range: 0-0" -I \
+    "${SUPABASE_URL:-}/rest/v1/scripts?generation_status=eq.pending&select=id" 2>/dev/null \
+    | awk -F'/' 'tolower($0) ~ /content-range:/ {print $2+0; exit}' \
+  )
+  pending_count=${pending_count:-0}
+  if [ "${pending_count}" -eq 0 ]; then
+    # Also check carousels + ig_stories before skipping
+    cc=$(curl -sSL -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY:-}" -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY:-}" \
+      "${SUPABASE_URL:-}/rest/v1/carousels?generation_status=eq.pending&select=id" 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+    ic=$(curl -sSL -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY:-}" -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY:-}" \
+      "${SUPABASE_URL:-}/rest/v1/ig_stories?generation_status=eq.pending&select=id" 2>/dev/null | jq 'length' 2>/dev/null || echo 0)
+    if [ "${cc:-0}" -eq 0 ] && [ "${ic:-0}" -eq 0 ]; then
+      echo "no pending rows — skipping all workers"
+      echo "== $(date -Iseconds) workers done (no-op) =="
+      exit 0
+    fi
+  fi
+
   for worker in worker-scripts.sh worker-carousels.sh worker-ig-stories.sh; do
     echo "-- ${worker} --"
     if ! bash "scripts/${worker}"; then

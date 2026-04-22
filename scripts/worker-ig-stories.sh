@@ -75,12 +75,17 @@ PROMPT_EOF
     new_status="pending"
     if [ $((attempts + 1)) -ge 3 ]; then new_status="failed"; fi
     error_msg=$(jq_string_escape "claude CLI failed: $(tail -c 200 /tmp/claude-worker-ig.err)")
-    supa_patch "ig_stories?id=eq.${ig_id}" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
+    supa_patch "ig_stories?id=eq.${ig_id}&generation_status=eq.pending" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
     continue
   fi
 
-  # Output is plain prompt text (not JSON). Trim leading/trailing whitespace.
-  cleaned=$(echo "${raw_output}" | awk 'NF{found=1} found' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')
+  # Output is plain prompt text (not JSON). Trim leading/trailing blank lines.
+  # Pure awk — BSD sed's multiline idiom is fragile on macOS.
+  cleaned=$(echo "${raw_output}" | awk '
+    NF { lines[++n] = $0; last = n; next }
+    n { lines[++n] = $0 }
+    END { for (i = 1; i <= last; i++) print lines[i] }
+  ')
 
   # Must contain brand tokens and copy section to be valid
   if ! echo "${cleaned}" | grep -q "BRAND TOKENS"; then
@@ -88,7 +93,7 @@ PROMPT_EOF
     new_status="pending"
     if [ $((attempts + 1)) -ge 3 ]; then new_status="failed"; fi
     error_msg=$(jq_string_escape "missing BRAND TOKENS: $(echo "${cleaned}" | head -c 200)")
-    supa_patch "ig_stories?id=eq.${ig_id}" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
+    supa_patch "ig_stories?id=eq.${ig_id}&generation_status=eq.pending" "{\"generation_attempts\":$((attempts + 1)),\"generation_status\":\"${new_status}\",\"generation_error\":${error_msg}}" > /dev/null
     continue
   fi
 
@@ -101,7 +106,8 @@ PROMPT_EOF
       generation_attempts: '"$((attempts + 1))"'
     }')
 
-  http_code=$(supa_patch "ig_stories?id=eq.${ig_id}" "${patch_body}")
+  # Status-gated PATCH — prevents overwriting rows a user modified mid-generation.
+  http_code=$(supa_patch "ig_stories?id=eq.${ig_id}&generation_status=eq.pending" "${patch_body}")
   if [ "${http_code}" -ge 200 ] && [ "${http_code}" -lt 300 ]; then
     log "  OK IG story ${ig_id} ready"
   else

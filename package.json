@@ -1,6 +1,0 @@
-{
-  "name": "ai-news-ig",
-  "version": "2.0.0",
-  "description": "Daily AI-for-business research brief generator — runs as a Claude Code Routine. Text-only output (briefs + carousel prompts + images), no rendering.",
-  "private": true
-}

@@ -13,82 +13,109 @@ Open `config/brand.json`. Fields currently pre-filled for `@SamPatel.AI`. Review
 - [ ] `brand_name` — free text
 - [ ] `timezone` — default `America/New_York` (drives "today" calculation in the prompt)
 - [ ] `niche` and `voice` — review; drives copy generation
-- [ ] `colors` and `fonts` — injected into every CAROUSEL PROMPT; pick what you want your carousels to use
+- [ ] `colors` and `fonts` — injected into every CAROUSEL PROMPT
 - [ ] Remove any `TODO_` values — the routine aborts at Step 0 if any remain
 
-## Phase 2 — Install the LaunchAgent (2 min)
+## Phase 2 — macOS permissions (1 min)
+
+`launchd` on recent macOS (Ventura+) refuses to execute scripts living under `~/Downloads`, `~/Desktop`, or `~/Documents` unless `/bin/bash` has Full Disk Access. Symptom if skipped: `launchd-stderr.log` shows `Operation not permitted`.
+
+**Grant it once:**
+
+1. Open **System Settings** → **Privacy & Security** → **Full Disk Access**
+2. Click the **`+`** button (unlock with your password)
+3. Press **`⌘ + Shift + G`**, type `/bin/bash`
+4. Select `bash`, click **Open**, make sure toggle is **on**
+5. Do the same for `/bin/zsh`
+
+Alternative: move this repo out of `~/Downloads` to `~/ai-news-ig` and update every hardcoded path in `scripts/*.plist` and `scripts/*.sh`.
+
+## Phase 3 — Install the LaunchAgents (2 min)
+
+Two LaunchAgents:
+- **Daily news routine** — fires once a day at 10:00 local time, writes briefs and pushes them to Supabase
+- **Worker poller** — fires every 120 seconds, refines script/carousel/IG rows the frontend marked as pending
 
 ```bash
 cd /Users/sahilmedtrics/Downloads/ai-news-ig
-cp scripts/com.sampatel.ainews.plist ~/Library/LaunchAgents/
+cp scripts/com.sampatel.ainews.plist         ~/Library/LaunchAgents/
+cp scripts/com.sampatel.ainews.workers.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.sampatel.ainews.plist
+launchctl load ~/Library/LaunchAgents/com.sampatel.ainews.workers.plist
 ```
 
-Verify it's loaded:
+Verify:
 ```bash
-launchctl list | grep com.sampatel.ainews
+launchctl list | grep com.sampatel
 ```
-You should see a line like: `-  0  com.sampatel.ainews` (the `-` means not currently running; `0` is the last exit code).
+Expected output:
+```
+-  0  com.sampatel.ainews          # dash = not running right now, 0 = last exit ok
+-  0  com.sampatel.ainews.workers
+```
 
-## Phase 3 — First smoke test (6–12 min)
+If either shows a non-zero exit code, check `~/AINewsDaily/_runs/launchd-stderr.log` for the error — usually "Operation not permitted" means Phase 2 was skipped.
 
-Run the job manually (don't wait until 7 AM):
+## Phase 4 — First smoke test (6–12 min)
+
+Run the daily routine manually (don't wait until 10 AM):
 
 ```bash
 ./scripts/run-daily.sh
 ```
 
-This does exactly what the LaunchAgent will do every morning. Watch the live output for 6–12 min. When it finishes:
+When it finishes, verify:
 
-- [ ] `~/AINewsDaily/2026-04-21/` (or today's date) exists
-- [ ] Inside, `_SUMMARY.md` + `_LOG.md` + `news01/` through `news10/`
-- [ ] Each `newsNN/` has `newsNN.txt` with all 4 sections (REFERENCE / STORY DETAILS / WHY IT MATTERS FOR BUSINESS OWNERS / CAROUSEL PROMPT)
+- [ ] `~/AINewsDaily/YYYY-MM-DD/` (today's date) exists
+- [ ] Inside: `_SUMMARY.md`, `_LOG.md`, and `newsNN/` subfolders
+- [ ] Each `newsNN/newsNN.txt` contains all 4 sections (REFERENCE, STORY DETAILS, WHY IT MATTERS FOR BUSINESS OWNERS, CAROUSEL PROMPT)
 - [ ] `_LOG.md` final line says `status: success`
 - [ ] `~/AINewsDaily/_MANIFEST.json` has today's entry
+- [ ] In Supabase: the `stories` table has today's rows (check the dashboard)
 
-Paste the CAROUSEL PROMPT from `news01/news01.txt` into Claude Design (claude.ai → Design). Does it produce an on-brand carousel?
+Paste the CAROUSEL PROMPT from any `newsNN.txt` into Claude Design → does it produce an on-brand carousel?
 
-## Phase 4 — Idempotency + fallback sanity checks (optional)
+## Phase 5 — Idempotency + fallback sanity checks (optional)
 
-- [ ] Run `./scripts/run-daily.sh` again same day → exits early (`_LOG.md` says "already ran today")
-- [ ] Temporarily disable all sources in `config/sources.json` (`"enabled": false`), run → verify `status: fallback` and yesterday's folder copied in as `fallback_from_YYYY-MM-DD/`
+- [ ] Run `./scripts/run-daily.sh` again same day → exits early with `already ran today`
+- [ ] Disable all sources in `config/sources.json` (`"enabled": false`), run → verify `status: fallback` and yesterday's content surfaces under `fallback_from_YYYY-MM-DD/`
 - [ ] Restore `sources.json`
 
-## Phase 5 — Let it run (7 days)
+## Phase 6 — Let it run (7 days)
 
-The LaunchAgent now fires every morning at 07:00. Each morning:
+The daily agent fires at 10:00 every morning. The worker poller runs every 2 minutes while the Mac is on. Each morning:
 
-- [ ] Open `~/AINewsDaily/` in Finder (drag to sidebar for one-click access)
-- [ ] Open today's dated folder → skim `_SUMMARY.md`
-- [ ] Pick 1-3 stories you want to post
-- [ ] Open the chosen `newsNN.txt`, copy the `=== CAROUSEL PROMPT ===` section
-- [ ] Paste into Claude Design, adjust if needed, export
-- [ ] Post to Instagram; write caption based on the `WHY IT MATTERS` section
+- [ ] Open the dashboard → pick 1–3 stories → click Script / Carousel / IG icons
+- [ ] Within ~2 minutes the "Refining" chip clears and real content appears
+- [ ] Paste carousel prompts into Claude Design, record scripts, post
 
-## Phase 6 — Iterate after first week
+## Phase 7 — Iterate after first week
 
 Day 8 review:
-- Stories off for the business-owner audience? → edit the 4 gates in Step 3 of `ROUTINE_PROMPT.md` OR add to `brand.json.deprioritize` OR tighten `niche`. Stories now carry a `Tier: Priority|Solid|FYI` field and a `Why kept:` sentence so you can see exactly what earned a tier.
+- Stories off for the business-owner audience? → edit the 4 gates in Step 3 of `ROUTINE_PROMPT.md`, `brand.json.deprioritize`, or tighten `niche`. Each brief's REFERENCE section shows `Tier` and `Why kept` for transparency.
 - Briefs too shallow / too long? → adjust word-count targets in Step 5 of `ROUTINE_PROMPT.md`
-- Carousel prompts giving off-brand designs? → edit the CAROUSEL PROMPT template in Step 5
+- Carousel prompts giving off-brand designs? → edit the CAROUSEL PROMPT template in Step 5, or the worker prompt in `scripts/worker-carousels.sh`
 - Same story appearing twice? → check `_MANIFEST.json.posted_stories` dedup window
 
 ## Debug quick-ref
 
 | Symptom | First check |
 |---|---|
-| Didn't run at 07:00 | `~/AINewsDaily/_runs/launchd-stderr.log` and `run-*.log` — any errors? |
-| `claude: command not found` | `scripts/run-daily.sh` PATH — ensure `~/.local/bin` is first |
-| 0 stories / fallback every day | `_LOG.md` per-source lines → are URLs reachable? |
-| Mac was off at 7am | Job runs at next wake; check `_MANIFEST.json` for gaps |
-| `TODO_` abort at Step 0 | Fill the missing field in `brand.json` |
-| Carousel prompt gives off-brand design | Iterate on CAROUSEL PROMPT template in `ROUTINE_PROMPT.md` |
+| Didn't run at 10:00 | `~/AINewsDaily/_runs/launchd-stderr.log` and `run-*.log` — any errors? |
+| `claude: command not found` in logs | `scripts/run-daily.sh` PATH should include `~/.local/bin` (it does by default) |
+| `Operation not permitted` | Phase 2 — grant bash Full Disk Access |
+| 0 stories / fallback every day | `_LOG.md` per-source lines — are newsletter URLs reachable? |
+| Mac was off at 10 AM | Runs on next wake. If powered off all day, that day is skipped; next fire is tomorrow at 10. |
+| `TODO_` abort at Step 0 | Fill missing field in `brand.json` |
+| Dashboard card stuck on "Refining" | `~/AINewsDaily/_runs/workers-*.log` — auth expired, or `generation_attempts` hit 3 |
+| Carousel prompt gives off-brand design | Iterate on CAROUSEL PROMPT template in `ROUTINE_PROMPT.md` Step 5 |
 
-## Uninstall (if you ever need to)
+## Uninstall (if needed)
 
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.sampatel.ainews.plist
-rm ~/Library/LaunchAgents/com.sampatel.ainews.plist
+launchctl unload ~/Library/LaunchAgents/com.sampatel.ainews.workers.plist
+rm ~/Library/LaunchAgents/com.sampatel.ainews*.plist
 ```
 
 `~/AINewsDaily/` stays until you delete it manually.

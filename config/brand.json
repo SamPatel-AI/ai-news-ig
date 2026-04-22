@@ -6,20 +6,10 @@
 
   "niche": "AI for business — daily updates for time-starved founders and owners, tech and non-tech, focused on what new AI means for running a business",
 
-  "niche_queries": [
-    "AI tools for business",
-    "AI for customer service",
-    "AI for marketing",
-    "AI automation for business",
-    "AI for e-commerce",
-    "AI for operations",
-    "AI product launch business"
-  ],
-
   "voice": "your smart friend who reads the AI news so you don't have to — practical, numbers over adjectives, every story ends with 'what this means for your business', no jargon without translation, confident but not hypey",
 
   "selection_framework": {
-    "_comment": "Replaces the old soft-score ranking. ROUTINE_PROMPT.md Step 3 now applies 4 gates + tier tagging in generous mode (over-collect; user filters in dashboard). No hard cap on story count.",
+    "_comment": "Replaces the old soft-score ranking. ROUTINE_PROMPT.md Step 3 applies 4 gates + tier tagging in generous mode (over-collect; user filters in dashboard). No hard cap on story count.",
     "mode": "generous",
     "tiers": {
       "priority":  "Passes all 4 gates with Gate 3 = 3 (directly on-niche, high business impact, concrete numbers, recognizable name, clear action).",
@@ -40,7 +30,6 @@
 
   "colors": {
     "primary":    "#FF4D2E",
-    "secondary":  "#1A1A1A",
     "accent":     "#FFD60A",
     "background": "#0A0A0A",
     "text":       "#FFFFFF",
@@ -52,12 +41,5 @@
     "body":    "Inter",
     "heading_weight": 800,
     "body_weight":    500
-  },
-
-  "aspect_ratios": {
-    "carousel": "4:5",
-    "story":    "9:16"
-  },
-
-  "drive_parent_folder": "AI News Daily"
+  }
 }

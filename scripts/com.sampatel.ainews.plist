@@ -10,12 +10,12 @@
         <string>/Users/sahilmedtrics/Downloads/ai-news-ig/scripts/run-daily.sh</string>
     </array>
 
-    <!-- Run daily at 07:00 local time (user's Mac timezone, expected America/New_York). -->
-    <!-- If the Mac is asleep at 07:00, launchd runs the job when the Mac next wakes. -->
+    <!-- Run daily at 10:00 local time (user's Mac timezone). -->
+    <!-- If Mac is asleep at 10:00, launchd runs the job when the Mac next wakes. -->
     <key>StartCalendarInterval</key>
     <dict>
         <key>Hour</key>
-        <integer>7</integer>
+        <integer>10</integer>
         <key>Minute</key>
         <integer>0</integer>
     </dict>

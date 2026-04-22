@@ -1,9 +1,9 @@
 #!/bin/bash
-# Shared helpers for Supabase REST API calls from worker scripts.
+# Shared helpers for Supabase REST API calls + Claude CLI health check.
 # Sourced by worker-*.sh scripts. Never run directly.
 #
-# Expects these env vars to be set by the caller (loaded from .env.local):
-#   SUPABASE_URL              e.g. https://viklcouyjeufloxfyzzl.supabase.co
+# Expects these env vars set by the caller (loaded from .env.local):
+#   SUPABASE_URL              e.g. https://dmstbdlyhabfjzwduxmj.supabase.co
 #   SUPABASE_SERVICE_ROLE_KEY service role JWT (bypasses RLS)
 
 set -euo pipefail
@@ -26,7 +26,7 @@ supa_get() {
 }
 
 # supa_patch <path-with-query> <json-body>
-# Returns HTTP status code.
+# Returns HTTP status code. Response body written to /tmp/supa_patch_last.json.
 supa_patch() {
   local path="$1"
   local body="$2"
@@ -39,17 +39,25 @@ supa_patch() {
     "${SUPABASE_URL}/rest/v1/${path}"
 }
 
-# supa_post <table> <json-body>
-supa_post() {
-  local table="$1"
-  local body="$2"
-  curl -sSL -o /tmp/supa_post_last.json -w "%{http_code}" -X POST \
-    -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
-    -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
-    -H "Content-Type: application/json" \
-    -H "Prefer: return=minimal,resolution=merge-duplicates" \
-    --data "${body}" \
-    "${SUPABASE_URL}/rest/v1/${table}"
+# Check that the Claude Code CLI has a valid, non-expired auth session.
+# Returns 0 if auth is OK, 1 otherwise. On failure, prints a guidance message
+# to stderr so users know what to do (log in interactively once).
+#
+# Called by worker entry points before any claude_generate invocation to avoid
+# burning all 3 generation_attempts on rows when the issue is actually auth.
+claude_auth_ok() {
+  # `claude --version` never hits the network; it just prints the binary version.
+  # To actually test auth, send the shortest possible prompt and time-limit it.
+  local test_out
+  test_out=$(echo 'echo ping' | timeout 20 claude --permission-mode bypassPermissions --model sonnet -p 'Reply with exactly: pong' 2>&1)
+  local rc=$?
+  if [ $rc -eq 0 ] && echo "${test_out}" | grep -qi "pong"; then
+    return 0
+  fi
+  echo "WARNING: Claude CLI auth check failed." >&2
+  echo "  Last 200 chars of response: $(printf '%s' "${test_out}" | tail -c 200)" >&2
+  echo "  Fix: open a terminal, run 'claude' interactively once, complete any login prompt." >&2
+  return 1
 }
 
 # Generate content via Claude Code CLI. Writes the prompt to a tmp file,
