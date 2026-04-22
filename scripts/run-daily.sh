@@ -34,6 +34,14 @@ cd "${REPO_DIR}"
     --model sonnet \
     < "${PROMPT_FILE}"
 
+  echo "--------------------------------------------------------"
+  echo "pushing today's briefs to Supabase (dashboard)…"
+  if ./scripts/push-stories-to-supabase.sh; then
+    echo "push OK"
+  else
+    echo "push FAILED (briefs are still on disk at ~/AINewsDaily/)"
+  fi
+
   echo "========================================================"
   echo "run finished: $(date -Iseconds)"
   echo "========================================================"

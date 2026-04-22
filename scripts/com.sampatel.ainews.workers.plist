@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sampatel.ainews.workers</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/sahilmedtrics/Downloads/ai-news-ig/scripts/run-workers.sh</string>
+    </array>
+
+    <!-- Every 120 seconds (2 minutes). Clicked "Generate Script" in the dashboard
+         will see refined content appear within up to 2 minutes + generation time. -->
+    <key>StartInterval</key>
+    <integer>120</integer>
+
+    <!-- Logs go to ~/AINewsDaily/_runs/workers-*.log; plist only captures fallback. -->
+    <key>StandardOutPath</key>
+    <string>/Users/sahilmedtrics/AINewsDaily/_runs/workers-launchd-stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/sahilmedtrics/AINewsDaily/_runs/workers-launchd-stderr.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/sahilmedtrics/Downloads/ai-news-ig</string>
+
+    <!-- Do not run on login — only on the 2-minute schedule. -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- If the Mac is asleep or off, launchd runs the job when it next wakes. -->
+</dict>
+</plist>
