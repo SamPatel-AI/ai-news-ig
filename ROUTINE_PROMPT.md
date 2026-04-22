@@ -9,7 +9,7 @@ Business owners — a **mix of tech-savvy founders and non-technical owners** (r
 ## Environment
 
 - You are running as Claude Code CLI on the user's Mac (macOS)
-- Current working directory is the repo: `/Users/sahilmedtrics/Downloads/ai-news-ig/`
+- Current working directory is the repo: `/Users/sahilmedtrics/ai-news-ig/`
 - `config/brand.json` — brand tokens (handle, niche, voice, timezone, selection_framework, deprioritize, colors, fonts)
 - `config/sources.json` — newsletters list (see below), RSS feeds, search queries, retry config
 - All output goes under `~/AINewsDaily/` (the user's home folder — absolute path expands to `/Users/sahilmedtrics/AINewsDaily/`)

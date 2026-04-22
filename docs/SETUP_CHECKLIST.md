@@ -37,7 +37,7 @@ Two LaunchAgents:
 - **Worker poller** — fires every 120 seconds, refines script/carousel/IG rows the frontend marked as pending
 
 ```bash
-cd /Users/sahilmedtrics/Downloads/ai-news-ig
+cd /Users/sahilmedtrics/ai-news-ig
 cp scripts/com.sampatel.ainews.plist         ~/Library/LaunchAgents/
 cp scripts/com.sampatel.ainews.workers.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.sampatel.ainews.plist

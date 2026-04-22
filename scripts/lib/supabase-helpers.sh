@@ -10,7 +10,7 @@ set -euo pipefail
 
 if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
   echo "ERROR: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set" >&2
-  echo "Expected at /Users/sahilmedtrics/Downloads/ai-news-ig/.env.local" >&2
+  echo "Expected at /Users/sahilmedtrics/ai-news-ig/.env.local" >&2
   exit 1
 fi
 

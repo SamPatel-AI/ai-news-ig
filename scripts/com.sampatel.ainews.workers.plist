@@ -7,7 +7,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/sahilmedtrics/Downloads/ai-news-ig/scripts/run-workers.sh</string>
+        <string>/Users/sahilmedtrics/ai-news-ig/scripts/run-workers.sh</string>
     </array>
 
     <!-- Every 120 seconds (2 minutes). Clicked "Generate Script" in the dashboard
@@ -22,7 +22,7 @@
     <string>/Users/sahilmedtrics/AINewsDaily/_runs/workers-launchd-stderr.log</string>
 
     <key>WorkingDirectory</key>
-    <string>/Users/sahilmedtrics/Downloads/ai-news-ig</string>
+    <string>/Users/sahilmedtrics/ai-news-ig</string>
 
     <!-- Do not run on login — only on the 2-minute schedule. -->
     <key>RunAtLoad</key>

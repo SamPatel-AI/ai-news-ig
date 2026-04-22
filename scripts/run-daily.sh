@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-REPO_DIR="/Users/sahilmedtrics/Downloads/ai-news-ig"
+REPO_DIR="/Users/sahilmedtrics/ai-news-ig"
 OUTPUT_ROOT="${HOME}/AINewsDaily"
 PROMPT_FILE="${REPO_DIR}/ROUTINE_PROMPT.md"
 LOG_DIR="${OUTPUT_ROOT}/_runs"

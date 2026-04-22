@@ -10,7 +10,7 @@
 
 set -euo pipefail
 
-REPO_DIR="/Users/sahilmedtrics/Downloads/ai-news-ig"
+REPO_DIR="/Users/sahilmedtrics/ai-news-ig"
 cd "${REPO_DIR}"
 
 if [ -f .env.local ] && [ -z "${SUPABASE_URL:-}" ]; then

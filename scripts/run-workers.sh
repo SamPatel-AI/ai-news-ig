@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-REPO_DIR="/Users/sahilmedtrics/Downloads/ai-news-ig"
+REPO_DIR="/Users/sahilmedtrics/ai-news-ig"
 LOG_DIR="${HOME}/AINewsDaily/_runs"
 mkdir -p "${LOG_DIR}"
 
