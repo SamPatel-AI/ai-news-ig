@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sampatel.ainews</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/sahilmedtrics/Downloads/ai-news-ig/scripts/run-daily.sh</string>
+    </array>
+
+    <!-- Run daily at 07:00 local time (user's Mac timezone, expected America/New_York). -->
+    <!-- If the Mac is asleep at 07:00, launchd runs the job when the Mac next wakes. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>7</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Redirect stdout/stderr to log files; the shell wrapper also writes its own log. -->
+    <key>StandardOutPath</key>
+    <string>/Users/sahilmedtrics/AINewsDaily/_runs/launchd-stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/sahilmedtrics/AINewsDaily/_runs/launchd-stderr.log</string>
+
+    <!-- Working directory: the repo, so `claude` sees config/ and scripts/ -->
+    <key>WorkingDirectory</key>
+    <string>/Users/sahilmedtrics/Downloads/ai-news-ig</string>
+
+    <!-- No RunAtLoad: we only want the 07:00 trigger, not a run on every login. -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

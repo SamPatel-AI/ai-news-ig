@@ -1,77 +1,94 @@
-# Setup Checklist — ~30 min first time
+# Setup Checklist — ~10 min first time (Local Edition)
 
-## Phase 0 — Verify plan
-- [x] Claude **Team or Enterprise** plan active (Routines require this tier)
-- [ ] Claude Code on the web enabled (Settings → Developer)
-- [ ] GitHub account — repo already exists at https://github.com/SamPatel-AI/ai-news-ig
-- [ ] Google account with Drive
+## Phase 0 — Prerequisites
+- [x] Claude Code CLI installed (`which claude` returns a path; `claude --version` works)
+- [x] Claude Max (or any paid plan) — CLI uses your login, no API key
+- [x] macOS (for `launchd`)
 
-## Phase 1 — Brand config review (5 min)
+## Phase 1 — Review brand config (2 min)
 
-`config/brand.json` is pre-filled for `@SamPatel.AI` with niche "AI for business owners". Review and adjust:
+Open `config/brand.json`. Fields currently pre-filled for `@SamPatel.AI`. Review:
 
-- [ ] `handle` — matches your actual IG
-- [ ] `brand_name` — free-text, used in Drive folder default
-- [ ] `timezone` — IANA zone (default `America/New_York`)
-- [ ] `niche` and `voice` — review; these drive all copy generation
-- [ ] `colors` and `fonts` — these are injected into the CAROUSEL PROMPT for every story; pick colors/fonts you want the generated carousels to use
-- [ ] `drive_parent_folder` — default `AI News Daily`; change if you want a different folder
+- [ ] `handle` — your IG handle
+- [ ] `brand_name` — free text
+- [ ] `timezone` — default `America/New_York` (drives "today" calculation in the prompt)
+- [ ] `niche` and `voice` — review; drives copy generation
+- [ ] `colors` and `fonts` — injected into every CAROUSEL PROMPT; pick what you want your carousels to use
+- [ ] Remove any `TODO_` values — the routine aborts at Step 0 if any remain
 
-**Do not leave any `TODO_` prefix anywhere in `brand.json`** — the Routine aborts at Step 0 if it finds one.
+## Phase 2 — Install the LaunchAgent (2 min)
 
-## Phase 2 — Connect Google Drive (5 min)
-- [ ] `claude.ai` → Settings → Connectors → add **Google Drive**, OAuth
-- [ ] Verify **Web Search** and **Web Fetch** are enabled (Settings → Features)
-- [ ] In Google Drive, create a folder named `AI News Daily` (or whatever `brand.drive_parent_folder` is set to). The Routine creates dated subfolders inside it.
+```bash
+cd /Users/sahilmedtrics/Downloads/ai-news-ig
+cp scripts/com.sampatel.ainews.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/com.sampatel.ainews.plist
+```
 
-## Phase 3 — Connect GitHub (5 min, if not already done)
-- [ ] `claude.ai` → Settings → Connectors → GitHub → connect the SamPatel-AI account
-- [ ] Verify the `SamPatel-AI/ai-news-ig` repo is visible to Claude Code
+Verify it's loaded:
+```bash
+launchctl list | grep com.sampatel.ainews
+```
+You should see a line like: `-  0  com.sampatel.ainews` (the `-` means not currently running; `0` is the last exit code).
 
-## Phase 4 — Create the Routine (5 min)
-- [ ] Go to `claude.ai/code/routines` → **New routine**
-- [ ] Name: `Daily AI Brief` (or anything)
-- [ ] Trigger: **Scheduled** → **Daily** → **07:00** (match your `brand.timezone`)
-- [ ] Repository: `SamPatel-AI/ai-news-ig`
-- [ ] Connectors: **Google Drive**, **Web Search**, **Web Fetch**
-- [ ] Prompt: paste the **entire contents** of `ROUTINE_PROMPT.md`
-- [ ] Save
+## Phase 3 — First smoke test (6–12 min)
 
-## Phase 5 — Test run
-- [ ] From the Routines UI, click **Run now**
-- [ ] Watch the live log for 6–12 min
-- [ ] Check Drive → `AI News Daily` → today's folder should exist with:
-  - `_SUMMARY.md` (10-story menu)
-  - `_LOG.md` (per-source status, final status)
-  - `news01/` through `news10/` each with `newsNN.txt` and any downloaded images
-- [ ] Check `_MANIFEST.json` at the parent — today's entry present
-- [ ] Open `news01/news01.txt` — are all 4 sections present? (REFERENCE, STORY DETAILS, WHY IT MATTERS FOR BUSINESS OWNERS, CAROUSEL PROMPT)
-- [ ] Copy the CAROUSEL PROMPT from one story, paste into Claude Design — does it produce an on-brand carousel?
+Run the job manually (don't wait until 7 AM):
 
-## Phase 6 — Idempotency + fallback sanity checks (optional but confidence-building)
-- [ ] Click **Run now** a second time same day — Routine exits early (`_LOG.md` says "already ran today")
-- [ ] Temporarily set most newsletters to `"enabled": false` in `sources.json`, commit, run. Verify RSS + search still yield stories.
-- [ ] Re-enable all, set ALL sources to `"enabled": false`, commit, run. Verify `status: fallback` in `_LOG.md` and today's folder contains `fallback_from_YYYY-MM-DD/` with yesterday's briefs.
-- [ ] Restore `sources.json`, commit.
+```bash
+./scripts/run-daily.sh
+```
 
-## Phase 7 — Go live
-- [ ] Let the Routine run on schedule for 3 days
-- [ ] On day 4, review:
-  - Stories off for the business-owner audience? → adjust `brand.json.ranking_criteria` weights or tighten `niche`
-  - Briefs too shallow or too long? → adjust word-count targets in Step 5 of `ROUTINE_PROMPT.md`
-  - Carousel prompts producing off-brand designs? → edit the CAROUSEL PROMPT template in Step 5 of `ROUTINE_PROMPT.md`
-  - Wrong stories prioritized? → add to `brand.json.deprioritize` or re-weight `ranking_criteria`
+This does exactly what the LaunchAgent will do every morning. Watch the live output for 6–12 min. When it finishes:
+
+- [ ] `~/AINewsDaily/2026-04-21/` (or today's date) exists
+- [ ] Inside, `_SUMMARY.md` + `_LOG.md` + `news01/` through `news10/`
+- [ ] Each `newsNN/` has `newsNN.txt` with all 4 sections (REFERENCE / STORY DETAILS / WHY IT MATTERS FOR BUSINESS OWNERS / CAROUSEL PROMPT)
+- [ ] `_LOG.md` final line says `status: success`
+- [ ] `~/AINewsDaily/_MANIFEST.json` has today's entry
+
+Paste the CAROUSEL PROMPT from `news01/news01.txt` into Claude Design (claude.ai → Design). Does it produce an on-brand carousel?
+
+## Phase 4 — Idempotency + fallback sanity checks (optional)
+
+- [ ] Run `./scripts/run-daily.sh` again same day → exits early (`_LOG.md` says "already ran today")
+- [ ] Temporarily disable all sources in `config/sources.json` (`"enabled": false`), run → verify `status: fallback` and yesterday's folder copied in as `fallback_from_YYYY-MM-DD/`
+- [ ] Restore `sources.json`
+
+## Phase 5 — Let it run (7 days)
+
+The LaunchAgent now fires every morning at 07:00. Each morning:
+
+- [ ] Open `~/AINewsDaily/` in Finder (drag to sidebar for one-click access)
+- [ ] Open today's dated folder → skim `_SUMMARY.md`
+- [ ] Pick 1-3 stories you want to post
+- [ ] Open the chosen `newsNN.txt`, copy the `=== CAROUSEL PROMPT ===` section
+- [ ] Paste into Claude Design, adjust if needed, export
+- [ ] Post to Instagram; write caption based on the `WHY IT MATTERS` section
+
+## Phase 6 — Iterate after first week
+
+Day 8 review:
+- Stories off for the business-owner audience? → adjust `brand.json.ranking_criteria` weights or tighten `niche`
+- Briefs too shallow / too long? → adjust word-count targets in Step 5 of `ROUTINE_PROMPT.md`
+- Carousel prompts giving off-brand designs? → edit the CAROUSEL PROMPT template in Step 5
+- Same story appearing twice? → check `_MANIFEST.json.posted_stories` dedup window
 
 ## Debug quick-ref
 
 | Symptom | First check |
 |---|---|
-| Routine didn't fire | `claude.ai/code/routines` → status + logs |
-| 0 stories / fallback every day | `_LOG.md` → which sources failed? Are URLs still correct? |
-| `newsNN.txt` missing a section | Step 5 of `ROUTINE_PROMPT.md` specifies exact delimiters — check Claude followed them |
-| Images missing | `newsNN.txt` → `Media files saved locally` line shows what got saved or failed |
-| Drive empty | Re-authorize Drive connector |
-| `TODO_` abort at Step 0 | Open `brand.json`; no field starting with `TODO_` should remain |
-| Duplicate story day after | Check `_MANIFEST.json.posted_stories` — 7-day window should have prevented it |
-| Off-brand tone in briefs | Tighten `brand.json.voice`, adjust ranking criteria, add examples to the Step 5 instructions |
-| Carousel prompt giving bad designs | Iterate on the CAROUSEL PROMPT template in `ROUTINE_PROMPT.md` — that's where the design spec lives |
+| Didn't run at 07:00 | `~/AINewsDaily/_runs/launchd-stderr.log` and `run-*.log` — any errors? |
+| `claude: command not found` | `scripts/run-daily.sh` PATH — ensure `~/.local/bin` is first |
+| 0 stories / fallback every day | `_LOG.md` per-source lines → are URLs reachable? |
+| Mac was off at 7am | Job runs at next wake; check `_MANIFEST.json` for gaps |
+| `TODO_` abort at Step 0 | Fill the missing field in `brand.json` |
+| Carousel prompt gives off-brand design | Iterate on CAROUSEL PROMPT template in `ROUTINE_PROMPT.md` |
+
+## Uninstall (if you ever need to)
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.sampatel.ainews.plist
+rm ~/Library/LaunchAgents/com.sampatel.ainews.plist
+```
+
+`~/AINewsDaily/` stays until you delete it manually.

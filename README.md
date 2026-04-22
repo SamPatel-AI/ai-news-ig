@@ -1,150 +1,134 @@
-# AI-for-Business Daily Research Brief
+# AI-for-Business Daily Research Brief (Local)
 
-Autonomous daily research pipeline for **[@SamPatel.AI](https://instagram.com/SamPatel.AI)**. Every morning at 7:00 AM, a Claude Code Routine runs in Anthropic's cloud — reads 10 AI newsletters + RSS + web search, ranks stories for **business owners** (tech and non-tech), and produces **10 text briefs** with carousel prompts and downloaded images. You open the Drive folder, pick the stories you want to post, paste the carousel prompt into Claude Design / Canva / any design tool, and post.
+Autonomous daily research pipeline for **[@SamPatel.AI](https://instagram.com/SamPatel.AI)**. Every morning at 7:00 AM, a macOS LaunchAgent on your Mac invokes Claude Code CLI, which reads 10 AI newsletters + RSS + web search, ranks stories for **business owners** (tech and non-tech), and writes **10 text briefs** with carousel prompts and downloaded images to `~/AINewsDaily/YYYY-MM-DD/`. You open the folder, pick stories you want to post, paste the carousel prompt into Claude Design or your design tool, and post.
 
-**No API keys. Mac can be off. Cloud = cloud.**
+**No API keys. No cloud. No Google Drive. No GitHub OAuth required at runtime.** Just your Claude Max subscription and your Mac.
 
 ```
-7:00 AM  Routine fires (Anthropic cloud, via your Team/Enterprise plan)
+7:00 AM  LaunchAgent fires (on your Mac)
 7:04 AM  10 newsletters + RSS + web search fetched
 7:08 AM  Top 10 stories ranked for business-owner relevance
 7:12 AM  Per-story briefs written, hero images downloaded
-7:14 AM  Uploaded to Google Drive, _MANIFEST.json updated
-         Done. No notification — just check Drive.
+7:14 AM  Output ready at ~/AINewsDaily/YYYY-MM-DD/
 
-You:     Open Drive → pick 1–3 stories you want to post → paste
-         the CAROUSEL PROMPT into Claude Design / Canva / your tool →
-         post the result. ~5–10 min end-to-end.
+You:     Open folder → pick 1-3 stories → paste CAROUSEL PROMPT into
+         Claude Design → post the result. ~5-10 min.
 ```
 
-## The audience this is built for
+## Audience this is built for
 
-**Business owners who don't have time to keep up with AI** — a mix of tech-savvy founders and traditional owners (retail, services, agencies, e-commerce, SMB). Content translates today's AI news into **"what does this mean for running your business?"** — tool recommendations, cost/time impact, action items. No jargon without translation. Numbers over adjectives.
-
-This isn't AI news for AI people. It's AI news for people who have a business to run.
+**Business owners who don't have time to keep up with AI** — a mix of tech-savvy founders and traditional owners (retail, services, agencies, e-commerce, SMB). Content translates today's AI news into **"what does this mean for running your business?"** — tool recommendations, cost/time impact, action items. No jargon without translation.
 
 ## What you get every morning
 
 ```
-output/YYYY-MM-DD/
+~/AINewsDaily/YYYY-MM-DD/
 ├── _SUMMARY.md                  ← 10-story menu with one-liners
-├── _LOG.md                      ← per-source status, final status line
+├── _LOG.md                      ← per-source status, final status
 ├── news01/
-│   ├── news01.txt               ← 4 sections: REFERENCE, STORY DETAILS,
-│   │                              WHY IT MATTERS FOR BUSINESS OWNERS,
+│   ├── news01.txt               ← 4 sections: REFERENCE / STORY DETAILS /
+│   │                              WHY IT MATTERS FOR BUSINESS OWNERS /
 │   │                              CAROUSEL PROMPT
-│   ├── news01_1.png             ← hero image from the source article
-│   ├── news01_2.png             ← additional inline images
-│   └── ...
-├── news02/
-│   └── ...
-└── news10/
-    └── ...
+│   ├── news01_1.png             ← hero image
+│   └── news01_2.png             ← inline images
+├── news02/ ...
+└── news10/ ...
+
+~/AINewsDaily/_MANIFEST.json     ← cross-day state: last 30 runs,
+                                    7-day story dedup ledger
+~/AINewsDaily/_runs/             ← launchd + script logs
 ```
 
-The `CAROUSEL PROMPT` section inside each `newsNN.txt` is a self-contained, Claude-Design-ready prompt. Paste it into Claude Design (or any AI design tool) and you get a finished 7-slide carousel in your brand style.
+The `CAROUSEL PROMPT` section inside each `newsNN.txt` is a self-contained, Claude-Design-ready prompt. Paste into Claude Design (or Canva / ChatGPT / any AI design tool) to get a finished 7-slide carousel in your brand style.
 
-## Why this works (no API keys needed)
+## Why this works
 
-Claude Code inside the Routine can:
-- Search the web and fetch pages (for research)
-- Write the briefs fresh each morning
-- Download hero images from article pages
-- Use the Google Drive connector to upload
+Claude Code CLI runs locally on your Mac. It can:
+- Fetch newsletter pages (WebFetch)
+- Run web searches (WebSearch)
+- Download images (curl via Bash)
+- Write files (Write)
+- Update the manifest (Read + Write)
 
-One repo + one Routine = the whole system. Your Team/Enterprise Claude subscription powers everything.
+All powered by your existing Claude Max login. No API keys, no external auth.
+
+A `launchd` LaunchAgent (scheduled system job) fires the job at 07:00 daily. Your Mac needs to be on or sleeping — not powered off. If it's asleep at 07:00, launchd runs the job when the Mac next wakes. If it's been off for days, the next launchd fire catches you up with whatever sources are still valid (the fallback branch keeps posting content).
 
 ## Project layout
 
 ```
 ai-news-ig/
-├── ROUTINE_PROMPT.md        ← The 11-step prompt the Routine runs every morning
-├── plan.md                  ← Progress tracker / spec
+├── ROUTINE_PROMPT.md           ← The 10-step prompt the CLI runs every morning
+├── plan.md                     ← Progress tracker / spec
 ├── config/
-│   ├── brand.json           ← Handle, niche, voice, colors, fonts, timezone, ranking weights
-│   └── sources.json         ← 10 newsletters, RSS, search queries, retry config
-├── docs/
-│   └── SETUP_CHECKLIST.md   ← ~30 min setup walkthrough
-└── output/                  ← Routine writes here each morning (gitignored; real copy in Drive)
+│   ├── brand.json              ← Handle, niche, voice, colors, fonts, ranking weights
+│   └── sources.json            ← 10 newsletters, RSS, search queries, retry config
+├── scripts/
+│   ├── run-daily.sh            ← Shell wrapper invoked by LaunchAgent
+│   └── com.sampatel.ainews.plist  ← LaunchAgent definition (install to ~/Library/LaunchAgents/)
+└── docs/
+    └── SETUP_CHECKLIST.md      ← ~10 min setup walkthrough
 ```
 
-A second file lives in Drive alongside your daily folders: **`_MANIFEST.json`** — tracks last 30 runs + last 7 days of posted stories. This is how the pipeline dedupes across days and knows what to fall back to when today is thin.
+## One-time setup (~10 min)
 
-## One-time setup (~30 min)
+See [`docs/SETUP_CHECKLIST.md`](docs/SETUP_CHECKLIST.md) for full steps. In brief:
 
-See [`docs/SETUP_CHECKLIST.md`](docs/SETUP_CHECKLIST.md) for the full walkthrough. In brief:
+1. Install LaunchAgent:
+   ```bash
+   cp scripts/com.sampatel.ainews.plist ~/Library/LaunchAgents/
+   launchctl load ~/Library/LaunchAgents/com.sampatel.ainews.plist
+   ```
+2. Smoke test: `./scripts/run-daily.sh` — wait 6–12 min, check `~/AINewsDaily/YYYY-MM-DD/`
+3. Confirm scheduled with `launchctl list | grep com.sampatel.ainews`
 
-1. Your GitHub repo is already set up at [SamPatel-AI/ai-news-ig](https://github.com/SamPatel-AI/ai-news-ig)
-2. `config/brand.json` is pre-filled for `@SamPatel.AI` — adjust if desired
-3. Connect Google Drive in `claude.ai` → Settings → Connectors
-4. Create Drive folder `AI News Daily` (or whatever `brand.drive_parent_folder` is set to)
-5. Create the Routine at `claude.ai/code/routines`:
-   - Trigger: Daily → 07:00 America/New_York
-   - Repo: SamPatel-AI/ai-news-ig
-   - Connectors: Google Drive, Web Search, Web Fetch
-   - Prompt: paste the entire contents of `ROUTINE_PROMPT.md`
-6. Click **Run now** to verify. First run is 6–12 min.
-
-## Resilience — why this won't break
-
-The pipeline has multiple independent layers so no single failure kills your daily brief:
+## Resilience
 
 | Failure mode | Mitigation |
 |---|---|
-| One newsletter down or URL changed | 10 newsletters + RSS + web search run every day; any 4+ surviving = enough stories |
-| All newsletters fail the same day | RSS + search provide independent fallback pool |
-| Fewer than 5 qualifying stories | **Fallback day**: yesterday's full folder is re-linked under `fallback_from_YYYY-MM-DD/` in today's output. You still have briefs to work from. |
-| Image download fails | Per-image log, brief kept, continue. Missing image doesn't break the story. |
-| Video embed found | URL listed in `newsNN.txt`, never downloaded (would be fragile) — you click through and save manually if you want it |
-| Google Drive OAuth expires | Upload fails, logs it, local container output preserved that run; re-auth in connectors; next run resumes normally |
-| Same story as yesterday | 7-day `posted_stories` dedup ledger in `_MANIFEST.json` with SHA1 title+host key |
-| Double-run (manual + scheduled) | Step 0 idempotency check — exits early if today already has `status: success` |
-| `TODO_` placeholder left in brand.json | Step 0 pre-flight abort |
+| One newsletter down | 10 newsletters + RSS + web search; any 4+ = enough |
+| All newsletters fail | RSS + search as independent fallback pool |
+| Fewer than 5 qualifying stories | **Fallback day**: yesterday's folder linked into today's as `fallback_from_YYYY-MM-DD/` |
+| Image download fails | Brief kept, image line says "none" or partial |
+| Mac was off at 07:00 | launchd runs at next wake; missed days show as gaps in `_MANIFEST.json` |
+| Same story as yesterday | 7-day SHA1 dedup ledger in `_MANIFEST.json` |
+| Manual re-run same day | Step 0 idempotency check |
 
-Every run writes `_LOG.md` with per-source status and a final `status: success|partial|fallback` line.
+## Daily flow
 
-## Daily flow (after setup)
-
-- **7:00 AM** — Routine fires, you do nothing
-- **7:14 AM** — Drive folder ready (no notification — you check when you're ready)
-- **Whenever** — open the Drive folder, pick 1–3 stories, paste the `CAROUSEL PROMPT` into your design tool, post the result
+- **07:00** — LaunchAgent fires on your Mac
+- **07:14** — `~/AINewsDaily/YYYY-MM-DD/` ready
+- **Whenever** — open folder, pick stories, paste CAROUSEL PROMPT into Claude Design, post
 
 ## Iterating
 
-**Want to refine story selection?** Edit `brand.json.ranking_criteria` weights or `brand.json.deprioritize`.
-
-**Want a different tone?** Edit `brand.json.voice` and the WHY IT MATTERS FOR BUSINESS OWNERS instructions in `ROUTINE_PROMPT.md`.
-
-**Want the carousel prompt to match a different design style?** Edit the CAROUSEL PROMPT section of `ROUTINE_PROMPT.md` Step 5 — that's the template. Different layouts, different copy structure, whatever you want.
-
-**Want different schedule?** Edit the Routine trigger at `claude.ai/code/routines`.
-
-## Plan limits (Team/Enterprise)
-
-- **25 routine runs/day** — this uses 1. 96% headroom.
-- Tokens draw from your Team seat usage, no separate bill.
+- **Story selection off?** Edit `config/brand.json.ranking_criteria` weights or `deprioritize`.
+- **Tone off?** Edit `config/brand.json.voice` and the WHY IT MATTERS instructions in `ROUTINE_PROMPT.md`.
+- **Carousel prompt giving off-brand designs?** Edit the CAROUSEL PROMPT template in `ROUTINE_PROMPT.md` Step 5.
+- **Different schedule?** Edit `scripts/com.sampatel.ainews.plist` → `StartCalendarInterval` → reload: `launchctl unload ... && launchctl load ...`.
 
 ## What's NOT included
 
-- Automated image/carousel rendering — you design carousels yourself using the prompt, which is actually better because you have taste
-- Reel / TikTok video scripts — text briefs only
-- Auto-posting to Instagram — you post manually
-- Analytics on what performed — add later if you want
-- Multi-brand support — clone the repo + routine for a second brand
-- Email / Slack notifications — you check Drive each morning
+- Automated image/carousel rendering (you design carousels yourself using the prompt)
+- Reel / TikTok scripts
+- Auto-posting to Instagram
+- Analytics
+- Multi-brand
+- Notifications
+- Video download (URLs only)
+- Google Drive / cloud sync (pure local)
 
 ## Troubleshooting
 
 | Symptom | First check |
 |---|---|
-| Routine didn't fire | `claude.ai/code/routines` → status + logs |
-| 0 stories / fallback every day | `_LOG.md` → which sources failed? URLs still correct? |
-| Images missing | `newsNN.txt` → `Media files saved locally` line shows what got saved or failed |
-| Drive empty | Re-authorize Google Drive in Settings → Connectors |
-| Off-brand tone | Tighten `brand.json.voice`, adjust `ranking_criteria`, edit the WHY IT MATTERS FOR BUSINESS OWNERS instructions in `ROUTINE_PROMPT.md` |
-| Same story twice in a week | Check `_MANIFEST.json.posted_stories` — dedupe should have caught it |
-| Carousel prompt outputs off-brand design | Tweak the CAROUSEL PROMPT template in `ROUTINE_PROMPT.md` Step 5 |
+| No run at 07:00 | `launchctl list \| grep com.sampatel.ainews` and `~/AINewsDaily/_runs/` for logs |
+| `claude: command not found` in run logs | `PATH` in `scripts/run-daily.sh` — Claude installs to `~/.local/bin` by default |
+| 0 stories / fallback daily | `_LOG.md` → source fetch failures; update URLs in `sources.json` |
+| `TODO_` abort | Fill missing field in `brand.json` |
+| Images missing | `newsNN.txt` → `Media files saved locally` line |
+| Off-brand tone | Tighten `brand.json.voice`, add examples to Step 5 of `ROUTINE_PROMPT.md` |
 
 ---
 
-`ROUTINE_PROMPT.md` is the single source of truth the routine reads every morning — edit that to change behavior.
+`ROUTINE_PROMPT.md` is the single source of truth. Edit that to change behavior.
